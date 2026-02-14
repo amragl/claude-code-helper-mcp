@@ -35,6 +35,7 @@ from fastmcp import FastMCP
 
 from claude_code_helper_mcp import __version__
 from claude_code_helper_mcp.config import MemoryConfig
+from claude_code_helper_mcp.mcp.markdown import MarkdownGenerator
 from claude_code_helper_mcp.models.records import BranchAction, FileAction
 from claude_code_helper_mcp.storage.store import MemoryStore
 from claude_code_helper_mcp.storage.window_manager import WindowManager
@@ -204,9 +205,7 @@ def _register_tools(server: FastMCP) -> None:
     - start_task -- start a new task, making it the active task (CMH-009)
     - complete_task -- complete the active task with optional summary (CMH-009)
     - get_task_status -- get details of the current active task (CMH-009)
-
-    Future tickets will add:
-    - generate_summary (CMH-010)
+    - generate_summary -- generate markdown summary for tasks (CMH-010)
     """
 
     @server.tool()
@@ -878,3 +877,149 @@ def _register_tools(server: FastMCP) -> None:
             },
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+    @server.tool()
+    def generate_summary(
+        ticket_id: str = "",
+        summary_type: str = "auto",
+    ) -> dict:
+        """Generate a markdown summary for a task or the window index.
+
+        Produces a human-readable markdown document from task memory data.
+        The output can be used for documentation, review, or post-/clear
+        recovery orientation.
+
+        The summary_type parameter controls what is generated:
+        - "auto": If a ticket_id is given, generates a task summary for that
+          specific task. If no ticket_id is given but an active task exists,
+          generates a current progress summary. Otherwise generates a window
+          index.
+        - "task": Full task summary (requires ticket_id or active task).
+        - "current": Current progress summary for the active task.
+        - "index": Window index showing all tasks in the sliding window.
+
+        Args:
+            ticket_id: Optional ticket ID to generate summary for. If empty
+                and summary_type is "auto" or "task", uses the active task.
+            summary_type: The type of summary to generate. Must be one of:
+                "auto", "task", "current", "index". Default: "auto".
+
+        Returns:
+            A dictionary with the generated markdown content, the summary
+            type that was produced, and metadata about the generation.
+            Returns an error if the requested task is not found or if no
+            task is active when one is required.
+        """
+        wm = get_window_manager()
+        gen = MarkdownGenerator()
+
+        valid_types = ("auto", "task", "current", "index")
+        if summary_type not in valid_types:
+            return {
+                "error": True,
+                "message": (
+                    f"Invalid summary_type '{summary_type}'. "
+                    f"Must be one of: {list(valid_types)}"
+                ),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Resolve the effective summary type for "auto" mode.
+        effective_type = summary_type
+        if summary_type == "auto":
+            if ticket_id:
+                effective_type = "task"
+            elif wm.has_active_task():
+                effective_type = "current"
+            else:
+                effective_type = "index"
+
+        # Generate based on effective type.
+        if effective_type == "task":
+            # Resolve the task.
+            if ticket_id:
+                task = wm.get_task(ticket_id)
+            else:
+                task = wm.get_current_task()
+
+            if task is None:
+                target = ticket_id if ticket_id else "(active task)"
+                logger.warning(
+                    "generate_summary: task '%s' not found.", target
+                )
+                return {
+                    "error": True,
+                    "message": (
+                        f"Task '{target}' not found. Check the ticket ID "
+                        f"or start a task first."
+                    ),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+            markdown = gen.generate_task_summary(task)
+            logger.info(
+                "Generated task summary for %s (%d chars).",
+                task.ticket_id,
+                len(markdown),
+            )
+            return {
+                "error": False,
+                "summary_type": "task",
+                "ticket_id": task.ticket_id,
+                "title": task.title,
+                "markdown": markdown,
+                "markdown_length": len(markdown),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        elif effective_type == "current":
+            task = wm.get_current_task()
+            if task is None:
+                logger.warning(
+                    "generate_summary: no active task for 'current' summary."
+                )
+                return {
+                    "error": True,
+                    "message": (
+                        "No active task. Start a task first with start_task, "
+                        "or use summary_type='index' for a window overview."
+                    ),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+            markdown = gen.generate_current_summary(task)
+            logger.info(
+                "Generated current summary for %s (%d chars).",
+                task.ticket_id,
+                len(markdown),
+            )
+            return {
+                "error": False,
+                "summary_type": "current",
+                "ticket_id": task.ticket_id,
+                "title": task.title,
+                "markdown": markdown,
+                "markdown_length": len(markdown),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        else:  # effective_type == "index"
+            markdown = gen.generate_window_index(
+                wm.window,
+                completed_tasks=wm.window.completed_tasks,
+            )
+            logger.info(
+                "Generated window index (%d chars, %d tasks in window).",
+                len(markdown),
+                wm.total_tasks_in_window(),
+            )
+            return {
+                "error": False,
+                "summary_type": "index",
+                "ticket_id": None,
+                "title": "Memory Window Index",
+                "markdown": markdown,
+                "markdown_length": len(markdown),
+                "tasks_in_window": wm.total_tasks_in_window(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
