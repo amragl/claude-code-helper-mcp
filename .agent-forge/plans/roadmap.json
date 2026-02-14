@@ -1,12 +1,173 @@
 {
   "project": "claude-memory-helper",
-  "vision": null,
-  "phases": [],
-  "milestones": [],
-  "progress": {
-    "total_tickets": 0,
+  "vision": "A companion MCP server and CLI for Agent Forge that records structured memory during task execution, enables seamless /clear recovery, and monitors for context drift with graduated intervention.",
+  "updated_at": "2026-02-14T14:00:00Z",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Foundation",
+      "description": "Project setup, dependencies, core data schema, file-based storage engine, sliding window manager, and configuration module.",
+      "status": "active",
+      "order": 1,
+      "milestones": [
+        {
+          "id": "M-1",
+          "name": "Core Infrastructure Complete",
+          "description": "Data models defined, storage engine operational, sliding window enforced, configuration loading works.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "in-progress"
+        }
+      ],
+      "progress": {
+        "total_tickets": 5,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    },
+    {
+      "id": "phase-2",
+      "name": "Core MCP Tools",
+      "description": "FastMCP server bootstrap and all recording tools: record_step, record_decision, record_file, record_branch, task lifecycle management, and markdown summary generation.",
+      "status": "planned",
+      "order": 2,
+      "milestones": [
+        {
+          "id": "M-2",
+          "name": "MCP Server with Recording Tools",
+          "description": "MCP server running with all 6 core recording tools functional. Tasks can be started, recorded, and completed via MCP.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "todo"
+        }
+      ],
+      "progress": {
+        "total_tickets": 5,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    },
+    {
+      "id": "phase-3",
+      "name": "Recovery and CLI",
+      "description": "Recovery context tool for post-/clear resumption, alignment checking tool, and developer-facing Click CLI with status, show, and list commands.",
+      "status": "planned",
+      "order": 3,
+      "milestones": [
+        {
+          "id": "M-3",
+          "name": "Recovery Context and Developer CLI",
+          "description": "After /clear, get_recovery_context returns full task context. Developer CLI shows memory status, task details, and task history.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "todo"
+        }
+      ],
+      "progress": {
+        "total_tickets": 4,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    },
+    {
+      "id": "phase-4",
+      "name": "Agent Forge Integration",
+      "description": "Hook integration for automatic recording, pipeline state file readers, post-clear recovery workflow, and end-to-end integration testing.",
+      "status": "planned",
+      "order": 4,
+      "milestones": [
+        {
+          "id": "M-4",
+          "name": "Full Pipeline Integration",
+          "description": "Memory recording works automatically during Agent Forge pipeline execution via hooks. Full recovery workflow operational. Integration tests pass.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "todo"
+        }
+      ],
+      "progress": {
+        "total_tickets": 4,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    },
+    {
+      "id": "phase-5",
+      "name": "Drift Detection and Intervention",
+      "description": "Plan drift detection, error loop detection, confusion pattern detection, scope creep detection, and graduated intervention system.",
+      "status": "planned",
+      "order": 5,
+      "milestones": [
+        {
+          "id": "M-5",
+          "name": "Active Quality Guardian",
+          "description": "Drift detection catches error loops (3+ failures) and wrong-file edits. Graduated intervention warns on first detection, suggests auto-clear on second.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "todo"
+        }
+      ],
+      "progress": {
+        "total_tickets": 5,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    },
+    {
+      "id": "phase-6",
+      "name": "Enhancement",
+      "description": "Memory analytics, developer review dashboard, memory export/import, and cross-project memory capabilities.",
+      "status": "planned",
+      "order": 6,
+      "milestones": [
+        {
+          "id": "M-6",
+          "name": "Advanced Features Complete",
+          "description": "Analytics provide actionable insights across tasks. Dashboard gives developers full visibility. Export/import enables context sharing.",
+          "target_date": null,
+          "completed_date": null,
+          "status": "todo"
+        }
+      ],
+      "progress": {
+        "total_tickets": 4,
+        "completed": 0,
+        "in_progress": 0,
+        "bugs_found": 0,
+        "bugs_fixed": 0,
+        "improvements_proposed": 0,
+        "percentage": 0
+      }
+    }
+  ],
+  "summary": {
+    "total_phases": 6,
+    "completed_phases": 0,
+    "total_tickets": 27,
     "completed_tickets": 0,
-    "percentage": 0
-  },
-  "last_updated": null
+    "total_bugs": 0,
+    "open_bugs": 0,
+    "overall_percentage": 0,
+    "velocity_tickets_per_week": 0
+  }
 }
