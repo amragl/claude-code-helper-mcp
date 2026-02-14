@@ -196,9 +196,10 @@ def _register_tools(server: FastMCP) -> None:
 
     Currently registers:
     - health_check -- server health and status information
+    - record_step -- record a step taken during the current task
+    - record_decision -- record a significant decision during the current task
 
     Future tickets will add:
-    - record_step, record_decision (CMH-007)
     - record_file, record_branch (CMH-008)
     - start_task, complete_task, get_task_status (CMH-009)
     - generate_summary (CMH-010)
@@ -250,4 +251,152 @@ def _register_tools(server: FastMCP) -> None:
             "archived_tasks": wm.archived_task_count(),
             "project_root": cfg.project_root,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    @server.tool()
+    def record_step(
+        action: str,
+        description: str = "",
+        tool_used: str = "",
+        result_summary: str = "",
+    ) -> dict:
+        """Record a step taken during the current task.
+
+        Each call creates a new StepRecord with an auto-assigned sequential
+        step number and UTC timestamp.  The step is appended to the current
+        task's step list and persisted immediately.
+
+        An active task must exist (created via start_task).  If no task is
+        active, returns an error response.
+
+        Args:
+            action: Short description of the action taken (e.g., "Created file",
+                "Ran tests", "Edited function").  Required, 1-200 characters.
+            description: Detailed description of what happened during this step.
+                Optional, up to 2000 characters.
+            tool_used: The tool or command that was used (e.g., "Write", "Bash",
+                "Edit").  Optional, up to 100 characters.
+            result_summary: Summary of the result (e.g., "File created
+                successfully", "3 tests passed").  Optional, up to 1000 characters.
+
+        Returns:
+            A dictionary with the recorded step details including step_number,
+            timestamp, and confirmation, or an error if no active task exists.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("record_step called with no active task.")
+            return {
+                "error": True,
+                "message": "No active task. Start a task first with start_task.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        step = current.add_step(
+            action=action,
+            description=description,
+            tool_used=tool_used if tool_used else None,
+            result_summary=result_summary if result_summary else None,
+        )
+
+        # Persist the updated task to disk.
+        wm.save_current_task()
+
+        logger.info(
+            "Recorded step #%d for task %s: %s",
+            step.step_number,
+            current.ticket_id,
+            action,
+        )
+
+        return {
+            "error": False,
+            "task_id": current.ticket_id,
+            "step_number": step.step_number,
+            "action": step.action,
+            "description": step.description,
+            "tool_used": step.tool_used,
+            "result_summary": step.result_summary,
+            "timestamp": step.timestamp.isoformat(),
+            "total_steps": current.step_count(),
+        }
+
+    @server.tool()
+    def record_decision(
+        decision: str,
+        reasoning: str = "",
+        alternatives: list[str] | None = None,
+        context: str = "",
+    ) -> dict:
+        """Record a significant decision made during the current task.
+
+        Each call creates a new DecisionRecord with an auto-assigned sequential
+        decision number and UTC timestamp.  The decision is appended to the
+        current task's decision list and persisted immediately.
+
+        An active task must exist (created via start_task).  If no task is
+        active, returns an error response.
+
+        Use this to capture *why* a particular approach was taken, what
+        alternatives were considered, and under what context.  Decisions are
+        especially valuable for post-/clear recovery -- they help reconstruct
+        the reasoning that led to the current state.
+
+        Args:
+            decision: The decision that was made (e.g., "Use Pydantic for
+                validation", "Split into two modules").  Required, 1-500
+                characters.
+            reasoning: Why this decision was made.  Optional, up to 2000
+                characters.
+            alternatives: A list of alternative approaches that were considered
+                but not chosen.  Optional.
+            context: Relevant context that informed the decision (e.g., "The
+                existing codebase already uses Pydantic for models").  Optional,
+                up to 1000 characters.
+
+        Returns:
+            A dictionary with the recorded decision details including
+            decision_number, timestamp, and confirmation, or an error if no
+            active task exists.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("record_decision called with no active task.")
+            return {
+                "error": True,
+                "message": "No active task. Start a task first with start_task.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        record = current.add_decision(
+            decision=decision,
+            reasoning=reasoning,
+            alternatives=alternatives or [],
+            context=context,
+        )
+
+        # Persist the updated task to disk.
+        wm.save_current_task()
+
+        logger.info(
+            "Recorded decision #%d for task %s: %s",
+            record.decision_number,
+            current.ticket_id,
+            decision,
+        )
+
+        return {
+            "error": False,
+            "task_id": current.ticket_id,
+            "decision_number": record.decision_number,
+            "decision": record.decision,
+            "reasoning": record.reasoning,
+            "alternatives": record.alternatives,
+            "context": record.context,
+            "timestamp": record.timestamp.isoformat(),
+            "total_decisions": len(current.decisions),
         }
