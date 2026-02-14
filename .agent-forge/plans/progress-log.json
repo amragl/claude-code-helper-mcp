@@ -377,6 +377,20 @@
         "total_tickets": 27,
         "completed_tickets": 0
       }
+    },
+    {
+      "timestamp": "2026-02-14T19:30:00Z",
+      "event": "ticket_completed",
+      "ticket_id": "CMH-001",
+      "phase_id": "phase-1",
+      "details": "CMH-001 completed. PR #28 merged (squash). Build: pass, Validate: 6/6 pass, Test: 21/21 pass, Monitor: healthy.",
+      "metrics_snapshot": {
+        "overall_percentage": 4,
+        "open_bugs": 0,
+        "velocity": 0,
+        "total_tickets": 27,
+        "completed_tickets": 1
+      }
     }
   ]
 }

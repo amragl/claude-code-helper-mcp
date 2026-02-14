@@ -1,4 +1,58 @@
 {
   "patterns": [],
-  "last_updated": null
+  "categories": {
+    "bug-pattern": {
+      "description": "Recurring bug types or error categories",
+      "count": 0
+    },
+    "test-gap": {
+      "description": "Missing test coverage areas detected across runs",
+      "count": 0
+    },
+    "performance": {
+      "description": "Build time, test execution time, or pipeline duration trends",
+      "count": 0
+    },
+    "dependency": {
+      "description": "Dependency health issues, version drift, or vulnerability patterns",
+      "count": 0
+    }
+  },
+  "trend_data": {
+    "pipeline_runs": [
+      {
+        "run_id": "TR-001",
+        "timestamp": "2026-02-14T18:16:31Z",
+        "ticket_id": "CMH-001",
+        "pr_number": 28,
+        "metrics": {
+          "tests_total": 21,
+          "tests_passed": 21,
+          "tests_failed": 0,
+          "tests_skipped": 0,
+          "tests_new": 16,
+          "tests_deprecated": 0,
+          "tests_flaky": 0,
+          "pass_rate": 100.0,
+          "regressions": 0,
+          "validation_critical": 0,
+          "validation_major": 0,
+          "validation_minor": 0,
+          "build_commits": 2,
+          "files_changed": 13,
+          "patterns_detected": 0,
+          "test_gaps_found": 0
+        }
+      }
+    ],
+    "test_pass_rates": [
+      {
+        "run_id": "TR-001",
+        "timestamp": "2026-02-14T18:16:31Z",
+        "rate": 100.0
+      }
+    ],
+    "bug_recurrence": {}
+  },
+  "last_updated": "2026-02-14T19:30:00Z"
 }

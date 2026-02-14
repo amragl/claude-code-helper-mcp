@@ -1,4 +1,31 @@
 {
-  "runs": [],
-  "last_run": null
+  "runs": [
+    {
+      "id": "TR-001",
+      "timestamp": "2026-02-14T18:16:31Z",
+      "trigger": "forge-test",
+      "ticket_id": "CMH-001",
+      "branch": "feature/CMH-001-project-initialization",
+      "pr_number": 28,
+      "results": {
+        "total": 21,
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "new_tests_added": 16,
+        "flaky_failures": 0,
+        "deprecations": 0
+      },
+      "failures": [],
+      "regressions": [],
+      "flaky_tests": [],
+      "deprecated_tests": [],
+      "deprecation_candidates": [],
+      "gap_tests_created": 0,
+      "gaps_addressed": [],
+      "gaps_verified": [],
+      "notes": "First test run for project. 5 existing pytest tests (test_init.py) all passed. 16 new Test Agent verification tests created covering all 8 acceptance criteria plus edge cases and integration tests. No regressions (first run). No prior test history."
+    }
+  ],
+  "last_run": "2026-02-14T18:16:31Z"
 }

@@ -60,12 +60,12 @@
       "phase": "phase-1",
       "priority": "critical",
       "type": "feature",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [],
       "assigned_agent": "build",
       "estimated_complexity": "small",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 28,
+      "completed_at": "2026-02-14T18:20:00Z"
     },
     {
       "id": "CMH-002",

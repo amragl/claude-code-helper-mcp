@@ -1,6 +1,31 @@
 {
-  "results": [],
-  "failures": [],
-  "regressions": [],
-  "last_run": null
+  "status": "success",
+  "timestamp": "2026-02-14T18:16:31Z",
+  "agent": "test",
+  "ticket_id": "CMH-001",
+  "output": {
+    "pr_number": 28,
+    "branch": "feature/CMH-001-project-initialization",
+    "ticket_id": "CMH-001",
+    "test_run_id": "TR-001",
+    "results": {
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "new_tests_added": 16,
+      "flaky_failures": 0,
+      "deprecations": 0
+    },
+    "failures": [],
+    "regressions": [],
+    "flaky_tests": [],
+    "deprecation_candidates": [],
+    "gap_tests_created": 0,
+    "gaps_addressed": [],
+    "gaps_verified": [],
+    "report_path": ".agent-forge/reports/test-2026-02-14T18-16-31.md"
+  },
+  "issues_created": [],
+  "issues_resolved": []
 }
