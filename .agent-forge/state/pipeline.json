@@ -25,7 +25,7 @@
   "auto_mode": null,
   "recovery_history": [],
   "agents": {
-    "plan": { "status": "idle", "last_run": null, "tickets_created": 0 },
+    "plan": { "status": "idle", "last_run": "2026-02-14T14:00:00Z", "tickets_created": 27 },
     "build": { "status": "idle", "last_run": null, "prs_created": 0 },
     "validate": { "status": "idle", "last_run": null, "issues_found": 0 },
     "test": { "status": "idle", "last_run": null, "tests_run": 0, "failures": 0 },
