@@ -35,6 +35,7 @@ from fastmcp import FastMCP
 
 from claude_code_helper_mcp import __version__
 from claude_code_helper_mcp.config import MemoryConfig
+from claude_code_helper_mcp.detection.alignment import AlignmentChecker
 from claude_code_helper_mcp.mcp.markdown import MarkdownGenerator
 from claude_code_helper_mcp.models.records import BranchAction, FileAction
 from claude_code_helper_mcp.models.recovery import RecoveryContext
@@ -208,6 +209,7 @@ def _register_tools(server: FastMCP) -> None:
     - get_task_status -- get details of the current active task (CMH-009)
     - generate_summary -- generate markdown summary for tasks (CMH-010)
     - get_recovery_context -- recover full task context after /clear (CMH-011)
+    - check_alignment -- check if an action is aligned with the task scope (CMH-012)
     """
 
     @server.tool()
@@ -1181,3 +1183,99 @@ def _register_tools(server: FastMCP) -> None:
         )
 
         return result
+
+    @server.tool()
+    def check_alignment(
+        action: str,
+        file_path: str = "",
+        threshold: float = 0.5,
+    ) -> dict:
+        """Check whether an action is aligned with the current task's scope.
+
+        Compares the proposed or in-progress action against the active task's
+        title, description, recorded files, recorded steps, and phase to
+        produce an alignment report.  Use this to detect scope drift before
+        it happens -- for example, before editing a file that is unrelated
+        to the current ticket.
+
+        The alignment score is a float between 0.0 (completely unrelated) and
+        1.0 (perfectly aligned).  Actions scoring below the threshold are
+        flagged with warnings.
+
+        An active task must exist (created via start_task).  If no task is
+        active, returns an error response.
+
+        Args:
+            action: Description of the action being checked (e.g., "Adding
+                error handling to the alignment checker", "Editing the
+                database migration script").  Required, 1-500 characters.
+            file_path: Optional file path the action targets (e.g.,
+                "src/detection/alignment.py").  Providing a file path
+                improves the accuracy of the alignment check by enabling
+                file-scope analysis.
+            threshold: Minimum confidence score to consider the action
+                aligned.  Default: 0.5.  Range: 0.0-1.0.  Lower values
+                are more permissive; higher values are stricter.
+
+        Returns:
+            A dictionary with the alignment assessment including confidence
+            score, aligned (boolean), warnings (list of strings), scope_info
+            (task context used for comparison), and action_analysis (scoring
+            breakdown).  Returns an error if no active task exists.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("check_alignment called with no active task.")
+            return {
+                "error": True,
+                "message": (
+                    "No active task. Start a task first with start_task. "
+                    "Alignment checking requires an active task to compare against."
+                ),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Clamp threshold to valid range.
+        effective_threshold = max(0.0, min(1.0, threshold))
+
+        # Gather task context for the checker.
+        task_description = current.metadata.get("description", "")
+        task_file_paths = current.get_file_paths()
+        task_step_actions = [s.action for s in current.steps]
+
+        # Run the alignment check.
+        checker = AlignmentChecker(threshold=effective_threshold)
+        report = checker.check(
+            action=action,
+            file_path=file_path if file_path else None,
+            task_title=current.title,
+            task_description=task_description,
+            task_phase=current.phase,
+            task_files=task_file_paths,
+            task_steps=task_step_actions,
+            task_ticket_id=current.ticket_id,
+        )
+
+        logger.info(
+            "Alignment check for task %s: confidence=%.3f, aligned=%s, "
+            "warnings=%d. Action: '%s', File: '%s'.",
+            current.ticket_id,
+            report.confidence,
+            report.aligned,
+            len(report.warnings),
+            action[:80],
+            file_path or "(none)",
+        )
+
+        return {
+            "error": False,
+            "task_id": current.ticket_id,
+            "confidence": round(report.confidence, 3),
+            "aligned": report.aligned,
+            "warnings": report.warnings,
+            "scope_info": report.scope_info,
+            "action_analysis": report.action_analysis,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
