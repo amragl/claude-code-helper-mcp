@@ -1,21 +1,21 @@
 {
-  "status": "idle",
-  "current_phase": null,
-  "current_ticket": null,
-  "current_agent": null,
-  "current_step": null,
+  "status": "running",
+  "current_phase": "phase-1",
+  "current_ticket": "CMH-001",
+  "current_agent": "build",
+  "current_step": "build",
   "last_completed_step": null,
   "failed_step": null,
   "failure_reason": null,
   "blocked_reason": null,
-  "last_run": null,
+  "last_run": "2026-02-14T14:10:00Z",
   "step_tracking": {
     "step_order": ["plan", "build", "validate", "test", "monitor"],
-    "current_step": null,
+    "current_step": "plan",
     "steps_completed": [],
-    "steps_remaining": [],
+    "steps_remaining": ["plan", "build", "validate", "test", "monitor"],
     "step_results": {
-      "plan": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "plan": { "status": "running", "started_at": "2026-02-14T14:10:00Z", "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
       "build": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
       "validate": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
       "test": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
@@ -25,12 +25,14 @@
   "auto_mode": null,
   "recovery_history": [],
   "agents": {
-    "plan": { "status": "idle", "last_run": "2026-02-14T14:00:00Z", "tickets_created": 27 },
+    "plan": { "status": "running", "last_run": "2026-02-14T14:10:00Z", "tickets_created": 27 },
     "build": { "status": "idle", "last_run": null, "prs_created": 0 },
     "validate": { "status": "idle", "last_run": null, "issues_found": 0 },
     "test": { "status": "idle", "last_run": null, "tests_run": 0, "failures": 0 },
     "monitor": { "status": "idle", "last_run": null, "alerts": 0 },
     "improve": { "status": "idle", "last_run": null, "suggestions": 0 }
   },
-  "history": []
+  "history": [
+    { "timestamp": "2026-02-14T14:10:00Z", "agent": "orchestrator", "action": "pipeline_started", "details": "Single ticket mode. Ticket: CMH-001. Phase: phase-1.", "result": "success" }
+  ]
 }

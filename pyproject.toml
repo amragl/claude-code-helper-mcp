@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "claude-code-helper-mcp"
+version = "0.1.0"
+description = "Structured memory system for Claude Code sessions with MCP integration and Agent Forge hooks"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "amragl"},
+]
+keywords = ["claude", "mcp", "memory", "agent-forge", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "fastmcp>=2.0.0",
+    "click>=8.0.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+]
+
+[project.scripts]
+memory = "claude_code_helper_mcp.cli.main:cli"
+
+[project.entry-points."mcp.servers"]
+claude-code-helper = "claude_code_helper_mcp.mcp:create_server"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/claude_code_helper_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

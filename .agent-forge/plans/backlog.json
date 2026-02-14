@@ -60,7 +60,7 @@
       "phase": "phase-1",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [],
       "assigned_agent": "build",
       "estimated_complexity": "small",
