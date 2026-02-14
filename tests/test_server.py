@@ -1151,3 +1151,1042 @@ class TestRecordingToolsFullLifecycle:
         assert s["error"] is True
         d = _parse_tool_result(asyncio.run(dec_tool.run({"decision": "After completion"})))
         assert d["error"] is True
+
+
+# ---------------------------------------------------------------------------
+# record_file tool tests (CMH-008)
+# ---------------------------------------------------------------------------
+
+class TestRecordFileToolRegistration:
+    """Tests that record_file is properly registered as an MCP tool."""
+
+    def test_tool_is_registered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        assert "record_file" in tools
+
+    def test_tool_callable(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        assert tool is not None
+
+
+class TestRecordFileNoActiveTask:
+    """Tests for record_file when no active task exists."""
+
+    def test_returns_error_when_no_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        assert result["error"] is True
+        assert "No active task" in result["message"]
+
+    def test_error_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+
+class TestRecordFileInvalidAction:
+    """Tests for record_file with invalid action values."""
+
+    def test_invalid_action_returns_error(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "invalid_action",
+        })))
+        assert result["error"] is True
+        assert "Invalid file action" in result["message"]
+        assert "invalid_action" in result["message"]
+
+    def test_error_lists_valid_actions(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "exploded",
+        })))
+        assert "created" in result["message"]
+        assert "modified" in result["message"]
+        assert "deleted" in result["message"]
+
+    def test_invalid_action_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "nope",
+        })))
+        assert "timestamp" in result
+
+
+class TestRecordFileBasic:
+    """Tests for basic record_file functionality with an active task."""
+
+    def test_records_file_with_required_fields_only(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+
+        assert result["error"] is False
+        assert result["task_id"] == "TST-001"
+        assert result["path"] == "src/main.py"
+        assert result["action"] == "created"
+        assert result["is_update"] is False
+        assert result["total_files"] == 1
+
+    def test_records_file_with_description(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/models/task.py",
+            "action": "modified",
+            "description": "Added record_file method to TaskMemory class",
+        })))
+
+        assert result["error"] is False
+        assert result["path"] == "src/models/task.py"
+        assert result["action"] == "modified"
+        assert result["description"] == "Added record_file method to TaskMemory class"
+
+    def test_empty_description_defaults_to_empty_string(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        assert result["description"] == ""
+
+    def test_all_valid_file_actions(self, project_dir):
+        """Verify each valid FileAction enum value is accepted."""
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        for action in ["created", "modified", "deleted", "renamed", "read"]:
+            result = _parse_tool_result(asyncio.run(tool.run({
+                "path": f"src/{action}_file.py",
+                "action": action,
+            })))
+            assert result["error"] is False
+            assert result["action"] == action
+
+
+class TestRecordFileDeduplication:
+    """Tests for file deduplication behavior."""
+
+    def test_first_record_is_not_update(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        assert result["is_update"] is False
+        assert result["action_history_count"] == 0
+
+    def test_second_record_same_path_is_update(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        # First record
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+
+        # Second record on same path
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "modified",
+            "description": "Added error handling",
+        })))
+
+        assert result["is_update"] is True
+        assert result["action"] == "modified"
+        assert result["action_history_count"] == 1  # previous action moved to history
+
+    def test_dedup_preserves_action_history(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        # Record three actions on the same file
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "modified",
+        })))
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "modified",
+            "description": "Third edit",
+        })))
+
+        assert result["action_history_count"] == 2  # two previous actions in history
+        assert result["action"] == "modified"
+
+    def test_different_paths_are_separate_records(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        r1 = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        r2 = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/utils.py",
+            "action": "created",
+        })))
+
+        assert r1["total_files"] == 1
+        assert r2["total_files"] == 2
+        assert r1["is_update"] is False
+        assert r2["is_update"] is False
+
+    def test_total_files_does_not_double_count_deduped(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "modified",
+        })))
+
+        assert result["total_files"] == 1  # Still only one file, just updated
+
+
+class TestRecordFileTimestamp:
+    """Tests for file record timestamps."""
+
+    def test_timestamp_is_valid_iso(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+    def test_timestamps_are_ordered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        r1 = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/first.py",
+            "action": "created",
+        })))
+        r2 = _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/second.py",
+            "action": "created",
+        })))
+
+        assert r1["timestamp"] <= r2["timestamp"]
+
+
+class TestRecordFilePersistence:
+    """Tests for file record persistence to disk."""
+
+    def test_file_persisted_to_task_file(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+            "description": "Initial file creation",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert reloaded is not None
+        assert len(reloaded.files) == 1
+        assert reloaded.files[0].path == "src/main.py"
+        assert reloaded.files[0].action.value == "created"
+        assert reloaded.files[0].description == "Initial file creation"
+
+    def test_deduplication_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "modified",
+            "description": "Added error handling",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert len(reloaded.files) == 1
+        assert reloaded.files[0].action.value == "modified"
+        assert len(reloaded.files[0].action_history) == 1
+        assert reloaded.files[0].action_history[0]["action"] == "created"
+
+    def test_multiple_files_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+
+        for i in range(1, 6):
+            _parse_tool_result(asyncio.run(tool.run({
+                "path": f"src/module_{i}.py",
+                "action": "created",
+            })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert len(reloaded.files) == 5
+        paths = {f.path for f in reloaded.files}
+        for i in range(1, 6):
+            assert f"src/module_{i}.py" in paths
+
+    def test_persistence_survives_window_reload(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_file"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+
+        from claude_code_helper_mcp.storage.window_manager import WindowManager
+        wm2 = WindowManager(storage_path=str(Path(project_dir) / ".claude-memory"))
+        task = wm2.store.load_task("TST-001")
+        assert task is not None
+        assert len(task.files) == 1
+        assert task.files[0].path == "src/main.py"
+
+
+# ---------------------------------------------------------------------------
+# record_branch tool tests (CMH-008)
+# ---------------------------------------------------------------------------
+
+class TestRecordBranchToolRegistration:
+    """Tests that record_branch is properly registered as an MCP tool."""
+
+    def test_tool_is_registered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        assert "record_branch" in tools
+
+    def test_tool_callable(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        assert tool is not None
+
+
+class TestRecordBranchNoActiveTask:
+    """Tests for record_branch when no active task exists."""
+
+    def test_returns_error_when_no_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+        })))
+        assert result["error"] is True
+        assert "No active task" in result["message"]
+
+    def test_error_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+        })))
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+
+class TestRecordBranchInvalidAction:
+    """Tests for record_branch with invalid action values."""
+
+    def test_invalid_action_returns_error(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "exploded",
+        })))
+        assert result["error"] is True
+        assert "Invalid branch action" in result["message"]
+        assert "exploded" in result["message"]
+
+    def test_error_lists_valid_actions(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "nope",
+        })))
+        assert "created" in result["message"]
+        assert "merged" in result["message"]
+        assert "pushed" in result["message"]
+
+    def test_invalid_action_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "nope",
+        })))
+        assert "timestamp" in result
+
+
+class TestRecordBranchBasic:
+    """Tests for basic record_branch functionality with an active task."""
+
+    def test_records_branch_with_required_fields_only(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-tools",
+            "action": "created",
+        })))
+
+        assert result["error"] is False
+        assert result["task_id"] == "TST-001"
+        assert result["branch_name"] == "feature/CMH-008-tools"
+        assert result["action"] == "created"
+        assert result["is_update"] is False
+        assert result["total_branches"] == 1
+
+    def test_records_branch_with_base_branch(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-tools",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        assert result["error"] is False
+        assert result["base_branch"] == "main"
+
+    def test_empty_base_branch_is_none(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-tools",
+            "action": "created",
+        })))
+        assert result["base_branch"] is None
+
+    def test_all_valid_branch_actions(self, project_dir):
+        """Verify each valid BranchAction enum value is accepted."""
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        for action in ["created", "checked_out", "merged", "deleted", "pushed", "pulled"]:
+            result = _parse_tool_result(asyncio.run(tool.run({
+                "branch_name": f"feature/{action}-branch",
+                "action": action,
+            })))
+            assert result["error"] is False
+            assert result["action"] == action
+
+
+class TestRecordBranchDeduplication:
+    """Tests for branch deduplication behavior."""
+
+    def test_first_record_is_not_update(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+            "base_branch": "main",
+        })))
+        assert result["is_update"] is False
+        assert result["action_history_count"] == 0
+
+    def test_second_record_same_branch_is_update(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        # Create the branch
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        # Push the branch
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "pushed",
+        })))
+
+        assert result["is_update"] is True
+        assert result["action"] == "pushed"
+        assert result["action_history_count"] == 1
+
+    def test_dedup_preserves_action_history(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        # Full branch lifecycle
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+            "base_branch": "main",
+        })))
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "pushed",
+        })))
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "merged",
+            "base_branch": "main",
+        })))
+
+        assert result["action_history_count"] == 2
+        assert result["action"] == "merged"
+
+    def test_different_branches_are_separate_records(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        r1 = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-a",
+            "action": "created",
+        })))
+        r2 = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-b",
+            "action": "created",
+        })))
+
+        assert r1["total_branches"] == 1
+        assert r2["total_branches"] == 2
+
+    def test_total_branches_does_not_double_count_deduped(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+        })))
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "pushed",
+        })))
+
+        assert result["total_branches"] == 1
+
+
+class TestRecordBranchTimestamp:
+    """Tests for branch record timestamps."""
+
+    def test_timestamp_is_valid_iso(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+        })))
+
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+    def test_timestamps_are_ordered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        r1 = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/first",
+            "action": "created",
+        })))
+        r2 = _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/second",
+            "action": "created",
+        })))
+
+        assert r1["timestamp"] <= r2["timestamp"]
+
+
+class TestRecordBranchPersistence:
+    """Tests for branch record persistence to disk."""
+
+    def test_branch_persisted_to_task_file(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008-tools",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert reloaded is not None
+        assert len(reloaded.branches) == 1
+        assert reloaded.branches[0].branch_name == "feature/CMH-008-tools"
+        assert reloaded.branches[0].action.value == "created"
+        assert reloaded.branches[0].base_branch == "main"
+
+    def test_deduplication_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+            "base_branch": "main",
+        })))
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "pushed",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert len(reloaded.branches) == 1
+        assert reloaded.branches[0].action.value == "pushed"
+        assert len(reloaded.branches[0].action_history) == 1
+        assert reloaded.branches[0].action_history[0]["action"] == "created"
+
+    def test_multiple_branches_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+
+        for i in range(1, 4):
+            _parse_tool_result(asyncio.run(tool.run({
+                "branch_name": f"feature/branch-{i}",
+                "action": "created",
+                "base_branch": "main",
+            })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert len(reloaded.branches) == 3
+
+    def test_persistence_survives_window_reload(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["record_branch"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "branch_name": "feature/CMH-008",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        from claude_code_helper_mcp.storage.window_manager import WindowManager
+        wm2 = WindowManager(storage_path=str(Path(project_dir) / ".claude-memory"))
+        task = wm2.store.load_task("TST-001")
+        assert task is not None
+        assert len(task.branches) == 1
+        assert task.branches[0].branch_name == "feature/CMH-008"
+
+
+# ---------------------------------------------------------------------------
+# Mixed recording tools tests (CMH-008 with CMH-007 tools)
+# ---------------------------------------------------------------------------
+
+class TestMixedRecordingTools:
+    """Tests for using all four recording tools together."""
+
+    def test_all_tools_on_same_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        dec_tool = tools["record_decision"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+
+        s = _parse_tool_result(asyncio.run(step_tool.run({"action": "Created branch"})))
+        b = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+            "base_branch": "main",
+        })))
+        d = _parse_tool_result(asyncio.run(dec_tool.run({
+            "decision": "Use separate module",
+        })))
+        f = _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/new_module.py",
+            "action": "created",
+        })))
+        s2 = _parse_tool_result(asyncio.run(step_tool.run({"action": "Wrote module"})))
+
+        assert s["task_id"] == "TST-001"
+        assert b["task_id"] == "TST-001"
+        assert d["task_id"] == "TST-001"
+        assert f["task_id"] == "TST-001"
+        assert s2["step_number"] == 2
+        assert d["decision_number"] == 1
+        assert f["total_files"] == 1
+        assert b["total_branches"] == 1
+
+    def test_mixed_persistence(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        dec_tool = tools["record_decision"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+
+        _parse_tool_result(asyncio.run(step_tool.run({"action": "Step 1"})))
+        _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+        })))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        _parse_tool_result(asyncio.run(dec_tool.run({"decision": "D1"})))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/utils.py",
+            "action": "created",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert len(reloaded.steps) == 1
+        assert len(reloaded.decisions) == 1
+        assert len(reloaded.files) == 2
+        assert len(reloaded.branches) == 1
+
+    def test_health_check_unaffected_by_file_and_branch_recordings(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        health = tools["health_check"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+        })))
+
+        result = _parse_tool_result(asyncio.run(health.run({})))
+        assert result["status"] == "healthy"
+        assert result["current_task"] == "TST-001"
+
+    def test_file_and_branch_tools_reject_after_completion(self, project_dir):
+        """record_file and record_branch return error after task is completed."""
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+        wm.complete_current_task("Done")
+
+        tools = asyncio.run(server.get_tools())
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+
+        f = _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+        b = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/TST-001",
+            "action": "created",
+        })))
+
+        assert f["error"] is True
+        assert b["error"] is True
+
+
+# ---------------------------------------------------------------------------
+# Full lifecycle with all recording tools (CMH-008)
+# ---------------------------------------------------------------------------
+
+class TestFullLifecycleWithAllTools:
+    """End-to-end test covering task creation, all 4 recording tools, completion."""
+
+    def test_full_lifecycle_with_all_recording_tools(self, project_dir):
+        """Create server, start task, record steps/decisions/files/branches, complete."""
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+
+        # 1. Start a task
+        wm.start_new_task("CMH-008", "Record file and branch tools", phase="phase-2")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        dec_tool = tools["record_decision"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+        health = tools["health_check"]
+
+        # 2. Record branch creation
+        b = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/CMH-008-record-file-and-branch-tools",
+            "action": "created",
+            "base_branch": "main",
+        })))
+        assert b["error"] is False
+        assert b["is_update"] is False
+
+        # 3. Record steps and decisions
+        _parse_tool_result(asyncio.run(step_tool.run({
+            "action": "Analyzed ticket requirements",
+            "tool_used": "Read",
+        })))
+        _parse_tool_result(asyncio.run(dec_tool.run({
+            "decision": "Accept action as string, validate against enum",
+            "reasoning": "MCP tools pass strings, need explicit validation",
+        })))
+
+        # 4. Record file actions
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/claude_code_helper_mcp/mcp/server.py",
+            "action": "modified",
+            "description": "Added record_file and record_branch tools",
+        })))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "tests/test_server.py",
+            "action": "modified",
+            "description": "Added tests for record_file and record_branch",
+        })))
+
+        # 5. Record more steps
+        _parse_tool_result(asyncio.run(step_tool.run({
+            "action": "Implemented record_file tool",
+            "tool_used": "Edit",
+            "result_summary": "Tool registered with dedup and enum validation",
+        })))
+        _parse_tool_result(asyncio.run(step_tool.run({
+            "action": "Implemented record_branch tool",
+            "tool_used": "Edit",
+        })))
+
+        # 6. Record branch push
+        b_push = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/CMH-008-record-file-and-branch-tools",
+            "action": "pushed",
+        })))
+        assert b_push["is_update"] is True
+        assert b_push["action_history_count"] == 1
+
+        # 7. Run tests step
+        _parse_tool_result(asyncio.run(step_tool.run({
+            "action": "Ran test suite",
+            "tool_used": "Bash",
+            "result_summary": "All tests passed",
+        })))
+
+        # 8. Verify in-memory state
+        task = wm.get_current_task()
+        assert task.step_count() == 4
+        assert len(task.decisions) == 1
+        assert len(task.files) == 2
+        assert len(task.branches) == 1
+        assert task.get_file_paths() == [
+            "src/claude_code_helper_mcp/mcp/server.py",
+            "tests/test_server.py",
+        ]
+        assert task.get_active_branch() == "feature/CMH-008-record-file-and-branch-tools"
+
+        # 9. Verify health
+        h = _parse_tool_result(asyncio.run(health.run({})))
+        assert h["current_task"] == "CMH-008"
+
+        # 10. Complete the task
+        wm.complete_current_task("Implemented record_file and record_branch MCP tools")
+
+        # 11. Verify completed task persisted with all recordings
+        completed = wm.store.load_task("CMH-008")
+        assert completed is not None
+        assert completed.status.value == "completed"
+        assert completed.step_count() == 4
+        assert len(completed.decisions) == 1
+        assert len(completed.files) == 2
+        assert len(completed.branches) == 1
+        assert completed.branches[0].branch_name == "feature/CMH-008-record-file-and-branch-tools"
+        assert completed.branches[0].action.value == "pushed"
+        assert len(completed.branches[0].action_history) == 1
+
+        # 12. Verify tools reject calls after task completion
+        f = _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "extra.py",
+            "action": "created",
+        })))
+        assert f["error"] is True
+        b = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/extra",
+            "action": "created",
+        })))
+        assert b["error"] is True

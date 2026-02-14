@@ -35,6 +35,7 @@ from fastmcp import FastMCP
 
 from claude_code_helper_mcp import __version__
 from claude_code_helper_mcp.config import MemoryConfig
+from claude_code_helper_mcp.models.records import BranchAction, FileAction
 from claude_code_helper_mcp.storage.store import MemoryStore
 from claude_code_helper_mcp.storage.window_manager import WindowManager
 
@@ -198,9 +199,10 @@ def _register_tools(server: FastMCP) -> None:
     - health_check -- server health and status information
     - record_step -- record a step taken during the current task
     - record_decision -- record a significant decision during the current task
+    - record_file -- record a file action during the current task (CMH-008)
+    - record_branch -- record a branch action during the current task (CMH-008)
 
     Future tickets will add:
-    - record_file, record_branch (CMH-008)
     - start_task, complete_task, get_task_status (CMH-009)
     - generate_summary (CMH-010)
     """
@@ -399,4 +401,198 @@ def _register_tools(server: FastMCP) -> None:
             "context": record.context,
             "timestamp": record.timestamp.isoformat(),
             "total_decisions": len(current.decisions),
+        }
+
+    @server.tool()
+    def record_file(
+        path: str,
+        action: str,
+        description: str = "",
+    ) -> dict:
+        """Record a file action during the current task.
+
+        Tracks files that are created, modified, deleted, renamed, or read
+        during task execution.  Files are deduplicated by path: if the same
+        file is recorded multiple times, subsequent calls update the existing
+        record and append to its action history rather than creating duplicates.
+
+        An active task must exist (created via start_task).  If no task is
+        active, returns an error response.
+
+        Args:
+            path: Relative file path from the project root (e.g.,
+                "src/models/task.py", "tests/test_storage.py").  Required.
+            action: The file action performed.  Must be one of: "created",
+                "modified", "deleted", "renamed", "read".  Required.
+            description: Description of what was done to this file (e.g.,
+                "Added TaskMemory model with Pydantic validation").  Optional,
+                up to 1000 characters.
+
+        Returns:
+            A dictionary with the recorded file details including path, action,
+            whether the record was new or updated (deduplicated), action history
+            count, total files tracked, and confirmation timestamp.  Returns an
+            error if no active task exists or if the action is invalid.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("record_file called with no active task.")
+            return {
+                "error": True,
+                "message": "No active task. Start a task first with start_task.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Validate the action string against the FileAction enum.
+        try:
+            file_action = FileAction(action)
+        except ValueError:
+            valid_actions = [a.value for a in FileAction]
+            logger.warning(
+                "record_file called with invalid action '%s'. Valid: %s",
+                action,
+                valid_actions,
+            )
+            return {
+                "error": True,
+                "message": (
+                    f"Invalid file action '{action}'. "
+                    f"Must be one of: {valid_actions}"
+                ),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Check if this file already exists in the task (for dedup reporting).
+        existing_before = any(f.path == path for f in current.files)
+
+        # Record the file action (TaskMemory handles deduplication).
+        record = current.record_file(
+            path=path,
+            action=file_action,
+            description=description,
+        )
+
+        # Persist the updated task to disk.
+        wm.save_current_task()
+
+        is_update = existing_before
+        logger.info(
+            "Recorded file %s for task %s: %s (%s)",
+            "update" if is_update else "new",
+            current.ticket_id,
+            path,
+            file_action.value,
+        )
+
+        return {
+            "error": False,
+            "task_id": current.ticket_id,
+            "path": record.path,
+            "action": record.action.value,
+            "description": record.description,
+            "is_update": is_update,
+            "action_history_count": len(record.action_history),
+            "timestamp": record.timestamp.isoformat(),
+            "total_files": len(current.files),
+        }
+
+    @server.tool()
+    def record_branch(
+        branch_name: str,
+        action: str,
+        base_branch: str = "",
+    ) -> dict:
+        """Record a git branch action during the current task.
+
+        Tracks the lifecycle of branches used during task execution: creation,
+        checkout, push, merge, deletion, and pull.  Branches are deduplicated
+        by name: if the same branch is recorded multiple times, subsequent
+        calls update the existing record and append to its action history.
+
+        An active task must exist (created via start_task).  If no task is
+        active, returns an error response.
+
+        Args:
+            branch_name: The full branch name (e.g.,
+                "feature/CMH-008-record-file-tools").  Required, 1-200
+                characters.
+            action: The branch action performed.  Must be one of: "created",
+                "checked_out", "merged", "deleted", "pushed", "pulled".
+                Required.
+            base_branch: The branch this was created from or merged into
+                (e.g., "main").  Optional.
+
+        Returns:
+            A dictionary with the recorded branch details including
+            branch_name, action, base_branch, whether the record was new or
+            updated (deduplicated), action history count, total branches
+            tracked, and confirmation timestamp.  Returns an error if no
+            active task exists or if the action is invalid.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("record_branch called with no active task.")
+            return {
+                "error": True,
+                "message": "No active task. Start a task first with start_task.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Validate the action string against the BranchAction enum.
+        try:
+            branch_action = BranchAction(action)
+        except ValueError:
+            valid_actions = [a.value for a in BranchAction]
+            logger.warning(
+                "record_branch called with invalid action '%s'. Valid: %s",
+                action,
+                valid_actions,
+            )
+            return {
+                "error": True,
+                "message": (
+                    f"Invalid branch action '{action}'. "
+                    f"Must be one of: {valid_actions}"
+                ),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Check if this branch already exists in the task (for dedup reporting).
+        existing_before = any(
+            b.branch_name == branch_name for b in current.branches
+        )
+
+        # Record the branch action (TaskMemory handles deduplication).
+        record = current.record_branch(
+            branch_name=branch_name,
+            action=branch_action,
+            base_branch=base_branch if base_branch else None,
+        )
+
+        # Persist the updated task to disk.
+        wm.save_current_task()
+
+        is_update = existing_before
+        logger.info(
+            "Recorded branch %s for task %s: %s (%s)",
+            "update" if is_update else "new",
+            current.ticket_id,
+            branch_name,
+            branch_action.value,
+        )
+
+        return {
+            "error": False,
+            "task_id": current.ticket_id,
+            "branch_name": record.branch_name,
+            "action": record.action.value,
+            "base_branch": record.base_branch,
+            "is_update": is_update,
+            "action_history_count": len(record.action_history),
+            "timestamp": record.timestamp.isoformat(),
+            "total_branches": len(current.branches),
         }
