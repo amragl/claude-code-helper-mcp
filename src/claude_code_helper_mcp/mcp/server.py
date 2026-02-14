@@ -37,6 +37,7 @@ from claude_code_helper_mcp import __version__
 from claude_code_helper_mcp.config import MemoryConfig
 from claude_code_helper_mcp.mcp.markdown import MarkdownGenerator
 from claude_code_helper_mcp.models.records import BranchAction, FileAction
+from claude_code_helper_mcp.models.recovery import RecoveryContext
 from claude_code_helper_mcp.storage.store import MemoryStore
 from claude_code_helper_mcp.storage.window_manager import WindowManager
 
@@ -206,6 +207,7 @@ def _register_tools(server: FastMCP) -> None:
     - complete_task -- complete the active task with optional summary (CMH-009)
     - get_task_status -- get details of the current active task (CMH-009)
     - generate_summary -- generate markdown summary for tasks (CMH-010)
+    - get_recovery_context -- recover full task context after /clear (CMH-011)
     """
 
     @server.tool()
@@ -1023,3 +1025,159 @@ def _register_tools(server: FastMCP) -> None:
                 "tasks_in_window": wm.total_tasks_in_window(),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
+
+    @server.tool()
+    def get_recovery_context(
+        ticket_id: str = "",
+        recent_step_count: int = 10,
+        include_prompt: bool = True,
+    ) -> dict:
+        """Recover full task context after a /clear command.
+
+        This is the primary recovery tool.  After a /clear wipes all session
+        context, calling get_recovery_context reconstructs everything needed to
+        resume work: the ticket being worked on, what files were modified, which
+        branch was active, what decisions were made, what the last step was, and
+        what the planned next steps are.
+
+        The tool searches for the target task in this order:
+
+        1. If ``ticket_id`` is given, looks up that specific task (active,
+           completed in window, or archived on disk).
+        2. If ``ticket_id`` is empty and an active task exists, uses the active
+           task.
+        3. If ``ticket_id`` is empty and no active task exists, uses the most
+           recently completed task in the window (the one you were most likely
+           working on before /clear).
+        4. If no tasks exist at all, returns an informational message.
+
+        Args:
+            ticket_id: Optional ticket ID to recover context for.  If empty,
+                auto-detects the most relevant task (active first, then most
+                recently completed).
+            recent_step_count: Number of recent steps to include in the
+                recovery context.  Default: 10.  Range: 1-50.
+            include_prompt: Whether to include a pre-formatted human-readable
+                recovery prompt in the response.  Default: True.
+
+        Returns:
+            A dictionary with the full recovery context including ticket_id,
+            title, phase, status, last_step, recent_steps, files_modified,
+            active_branch, key_decisions, next_steps, summary_so_far,
+            total_steps_completed, task_started_at, metadata, and optionally
+            a formatted recovery_prompt.  Returns an error if the specified
+            ticket is not found, or an informational message if no tasks exist.
+        """
+        wm = get_window_manager()
+
+        # Clamp recent_step_count to a safe range.
+        recent_step_count = max(1, min(50, recent_step_count))
+
+        # --- Resolve the target task ---
+        task = None
+        source = ""
+
+        if ticket_id:
+            # Explicit ticket ID requested.
+            task = wm.get_task(ticket_id)
+            if task is None:
+                logger.warning(
+                    "get_recovery_context: task '%s' not found.", ticket_id
+                )
+                return {
+                    "error": True,
+                    "message": (
+                        f"Task '{ticket_id}' not found in the memory window "
+                        f"or archive. Available tasks: "
+                        f"{wm.get_all_known_task_ids()}"
+                    ),
+                    "available_tasks": wm.get_all_known_task_ids(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            source = "explicit"
+        else:
+            # Auto-detect: prefer active task, then most recent completed.
+            current = wm.get_current_task()
+            if current is not None:
+                task = current
+                source = "active"
+            elif wm.window.completed_tasks:
+                # Most recently completed task is at the end of the list.
+                task = wm.window.completed_tasks[-1]
+                source = "most_recent_completed"
+            else:
+                # No tasks at all.
+                logger.info(
+                    "get_recovery_context: no tasks in window or archive."
+                )
+                return {
+                    "error": False,
+                    "has_context": False,
+                    "message": (
+                        "No tasks found in the memory window. "
+                        "Use start_task to begin a new task, or check if "
+                        "tasks exist in the archive."
+                    ),
+                    "archived_task_ids": wm.window.archived_task_ids,
+                    "window_state": {
+                        "tasks_in_window": wm.total_tasks_in_window(),
+                        "completed_tasks": wm.completed_task_count(),
+                        "archived_tasks": wm.archived_task_count(),
+                        "window_size": wm.window_size,
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+        # --- Build the RecoveryContext ---
+        recovery = RecoveryContext.from_task_memory(
+            task, recent_step_count=recent_step_count
+        )
+
+        # Build the response dict from the RecoveryContext.
+        result = {
+            "error": False,
+            "has_context": True,
+            "source": source,
+            "ticket_id": recovery.ticket_id,
+            "title": recovery.title,
+            "phase": recovery.phase,
+            "status": recovery.status,
+            "generated_at": recovery.generated_at.isoformat(),
+            "last_step": recovery.last_step,
+            "recent_steps": recovery.recent_steps,
+            "files_modified": recovery.files_modified,
+            "active_branch": recovery.active_branch,
+            "key_decisions": recovery.key_decisions,
+            "next_steps": recovery.next_steps,
+            "summary_so_far": recovery.summary_so_far,
+            "total_steps_completed": recovery.total_steps_completed,
+            "task_started_at": (
+                recovery.task_started_at.isoformat()
+                if recovery.task_started_at
+                else None
+            ),
+            "metadata": recovery.metadata,
+            "window_state": {
+                "tasks_in_window": wm.total_tasks_in_window(),
+                "completed_tasks": wm.completed_task_count(),
+                "archived_tasks": wm.archived_task_count(),
+                "window_size": wm.window_size,
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        if include_prompt:
+            result["recovery_prompt"] = recovery.format_for_prompt()
+
+        logger.info(
+            "Generated recovery context for task %s (source: %s). "
+            "Steps: %d, Files: %d, Decisions: %d, Branch: %s.",
+            recovery.ticket_id,
+            source,
+            recovery.total_steps_completed,
+            len(recovery.files_modified),
+            len(recovery.key_decisions),
+            recovery.active_branch or "(none)",
+        )
+
+        return result
