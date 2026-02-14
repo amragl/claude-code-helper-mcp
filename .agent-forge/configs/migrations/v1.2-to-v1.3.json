@@ -1,0 +1,28 @@
+{
+  "from_version": "1.2.0",
+  "to_version": "1.3.0",
+  "description": "Add auto_merge configuration to project.json. Add pipeline_steps configuration.",
+  "released_at": "2026-02-12T00:00:00Z",
+  "operations": [
+    {
+      "type": "add_field",
+      "file": ".agent-forge/project.json",
+      "path": "auto_merge",
+      "value": {
+        "enabled": true,
+        "merge_strategy": "squash",
+        "require_human_review": false,
+        "delete_branch_after_merge": true,
+        "sync_local_after_merge": true
+      },
+      "description": "PR auto-merge configuration"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/project.json",
+      "path": "pipeline_steps",
+      "value": ["plan", "build", "validate", "test", "monitor"],
+      "description": "Configurable pipeline steps"
+    }
+  ]
+}

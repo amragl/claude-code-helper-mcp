@@ -1,0 +1,3 @@
+# Keep state files but ignore temp
+state/*.tmp
+reports/*.tmp

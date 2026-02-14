@@ -1,0 +1,18 @@
+{
+  "from_version": "1.3.0",
+  "to_version": "1.4.0",
+  "description": "Create schema files directory for agent output validation. Create agent-protocol.json if missing.",
+  "released_at": "2026-02-12T02:30:00Z",
+  "operations": [
+    {
+      "type": "create_directory",
+      "path": ".agent-forge/configs/schemas",
+      "description": "Agent output JSON schema files directory"
+    },
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/configs/agent-protocol.json",
+      "description": "Inter-agent communication protocol definition"
+    }
+  ]
+}

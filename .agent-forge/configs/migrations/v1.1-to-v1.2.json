@@ -1,0 +1,18 @@
+{
+  "from_version": "1.1.0",
+  "to_version": "1.2.0",
+  "description": "Create validation-rules.json and hook-rules.json config files. Add schema_version field to agent protocol.",
+  "released_at": "2026-02-11T12:00:00Z",
+  "operations": [
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/configs/validation-rules.json",
+      "description": "Validation rules for Validate Agent mock detection tiers and project-specific rules"
+    },
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/configs/hook-rules.json",
+      "description": "Configurable hook rule extensions for PreToolUse/PostToolUse hooks"
+    }
+  ]
+}

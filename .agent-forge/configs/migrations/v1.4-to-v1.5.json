@@ -1,0 +1,63 @@
+{
+  "from_version": "1.4.0",
+  "to_version": "1.5.0",
+  "description": "Add auto_mode configuration to project.json and pipeline.json. Create hub directory with registry, hub-config, and resource-state. Create templates directory.",
+  "released_at": "2026-02-12T15:00:00Z",
+  "operations": [
+    {
+      "type": "add_field",
+      "file": ".agent-forge/project.json",
+      "path": "auto_mode",
+      "value": {
+        "max_tickets_per_session": 10,
+        "max_hours": 8,
+        "max_consecutive_failures": 2,
+        "skip_improve_approval": true,
+        "auto_advance_tickets": true,
+        "checkpoint_interval_tickets": 1,
+        "cooldown_between_tickets_seconds": 30,
+        "safety_limits": {
+          "stop_on_critical_bug": true,
+          "stop_on_mock_detection": true,
+          "max_fix_loop_iterations": 2
+        }
+      },
+      "description": "Autonomous overnight mode configuration"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "auto_mode",
+      "value": null,
+      "description": "Auto-mode session tracking (null when inactive)"
+    },
+    {
+      "type": "create_directory",
+      "path": ".agent-forge/hub",
+      "description": "Multi-project hub directory"
+    },
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/hub/registry.json",
+      "template": "registry.json.default",
+      "description": "Project registry for multi-project management"
+    },
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/hub/hub-config.json",
+      "template": "hub-config.json.default",
+      "description": "Hub configuration with resource governor settings"
+    },
+    {
+      "type": "create_file_if_missing",
+      "file": ".agent-forge/hub/resource-state.json",
+      "template": "resource-state.json.default",
+      "description": "Resource governor state tracking"
+    },
+    {
+      "type": "create_directory",
+      "path": ".agent-forge/configs/templates",
+      "description": "Template files directory (CLAUDE.md template, etc.)"
+    }
+  ]
+}

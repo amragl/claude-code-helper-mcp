@@ -1,0 +1,43 @@
+{
+  "project_name": "claude-memory-helper",
+  "repo_url": "git@github.com:amragl/claude-memory-helper.git",
+  "repo_owner": "amragl",
+  "repo_name": "claude-memory-helper",
+  "repo_path": "/Users/amragl/Python Projects/claude-memory-helper",
+  "branch_strategy": {
+    "main": "main",
+    "develop": "main",
+    "feature_prefix": "feature/",
+    "fix_prefix": "fix/",
+    "agent_prefix": "agent/"
+  },
+  "tech_stack": {
+    "languages": ["Python"],
+    "frameworks": [],
+    "databases": [],
+    "other": []
+  },
+  "auto_merge": {
+    "enabled": true,
+    "merge_strategy": "squash",
+    "require_human_review": false,
+    "delete_branch_after_merge": true,
+    "sync_local_after_merge": true
+  },
+  "auto_mode": {
+    "max_tickets_per_session": 10,
+    "max_hours": 8,
+    "max_consecutive_failures": 2,
+    "skip_improve_approval": true,
+    "auto_advance_tickets": true,
+    "checkpoint_interval_tickets": 1,
+    "cooldown_between_tickets_seconds": 30,
+    "safety_limits": {
+      "stop_on_critical_bug": true,
+      "stop_on_mock_detection": true,
+      "max_fix_loop_iterations": 2
+    }
+  },
+  "initialized_at": "2026-02-14T09:34:00Z",
+  "custom_rules": []
+}

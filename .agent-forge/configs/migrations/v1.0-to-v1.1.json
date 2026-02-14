@@ -1,0 +1,136 @@
+{
+  "from_version": "1.0.0",
+  "to_version": "1.1.0",
+  "description": "Add fix_loop and recovery_history fields to pipeline.json. Add error recovery fields to step_results.",
+  "released_at": "2026-02-11T00:00:00Z",
+  "operations": [
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "fix_loop",
+      "value": null,
+      "description": "Validate-fix loop state tracker"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "recovery_history",
+      "value": [],
+      "description": "Append-only recovery event audit log"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "last_completed_step",
+      "value": null,
+      "description": "Most recent successfully completed step"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "failed_step",
+      "value": null,
+      "description": "Step that caused blocked/failed state"
+    },
+    {
+      "type": "add_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "failure_reason",
+      "value": null,
+      "description": "Formatted failure description with error code and recovery hint"
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.plan.error_code",
+      "value": null,
+      "description": "Machine-readable error code for plan step"
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.plan.retry_count",
+      "value": 0,
+      "description": "Retry counter for plan step"
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.plan.last_retry_at",
+      "value": null,
+      "description": "Last retry timestamp for plan step"
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.build.error_code",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.build.retry_count",
+      "value": 0
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.build.last_retry_at",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.validate.error_code",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.validate.retry_count",
+      "value": 0
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.validate.last_retry_at",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.test.error_code",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.test.retry_count",
+      "value": 0
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.test.last_retry_at",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.monitor.error_code",
+      "value": null
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.monitor.retry_count",
+      "value": 0
+    },
+    {
+      "type": "add_nested_field",
+      "file": ".agent-forge/state/pipeline.json",
+      "path": "step_tracking.step_results.monitor.last_retry_at",
+      "value": null
+    }
+  ]
+}

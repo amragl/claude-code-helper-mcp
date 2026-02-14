@@ -1,0 +1,36 @@
+{
+  "status": "idle",
+  "current_phase": null,
+  "current_ticket": null,
+  "current_agent": null,
+  "current_step": null,
+  "last_completed_step": null,
+  "failed_step": null,
+  "failure_reason": null,
+  "blocked_reason": null,
+  "last_run": null,
+  "step_tracking": {
+    "step_order": ["plan", "build", "validate", "test", "monitor"],
+    "current_step": null,
+    "steps_completed": [],
+    "steps_remaining": [],
+    "step_results": {
+      "plan": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "build": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "validate": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "test": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "monitor": { "status": null, "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null }
+    }
+  },
+  "auto_mode": null,
+  "recovery_history": [],
+  "agents": {
+    "plan": { "status": "idle", "last_run": null, "tickets_created": 0 },
+    "build": { "status": "idle", "last_run": null, "prs_created": 0 },
+    "validate": { "status": "idle", "last_run": null, "issues_found": 0 },
+    "test": { "status": "idle", "last_run": null, "tests_run": 0, "failures": 0 },
+    "monitor": { "status": "idle", "last_run": null, "alerts": 0 },
+    "improve": { "status": "idle", "last_run": null, "suggestions": 0 }
+  },
+  "history": []
+}
