@@ -1,7 +1,25 @@
 {
-  "ticket": null,
+  "last_build": "2026-02-14T18:10:00Z",
+  "status": "in-progress",
+  "timestamp": "2026-02-14T18:10:00Z",
+  "agent": "build",
+  "ticket_id": "CMH-001",
+  "ticket": {
+    "id": "CMH-001",
+    "github_issue": 1,
+    "title": "Project initialization and structure"
+  },
   "branch": null,
   "pr_number": null,
-  "self_check": null,
-  "last_run": null
+  "pr_url": null,
+  "commits": 0,
+  "files_changed": [],
+  "self_check": {
+    "compiles": null,
+    "meets_criteria": null,
+    "no_mocks": null,
+    "no_placeholders": null
+  },
+  "error": null,
+  "history": []
 }
