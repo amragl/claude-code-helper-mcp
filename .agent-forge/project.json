@@ -13,9 +13,9 @@
   },
   "tech_stack": {
     "languages": ["Python"],
-    "frameworks": [],
+    "frameworks": ["Click", "FastMCP"],
     "databases": [],
-    "other": []
+    "other": ["Claude Code MCP Protocol"]
   },
   "auto_merge": {
     "enabled": true,
