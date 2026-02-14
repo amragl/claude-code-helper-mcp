@@ -201,9 +201,11 @@ def _register_tools(server: FastMCP) -> None:
     - record_decision -- record a significant decision during the current task
     - record_file -- record a file action during the current task (CMH-008)
     - record_branch -- record a branch action during the current task (CMH-008)
+    - start_task -- start a new task, making it the active task (CMH-009)
+    - complete_task -- complete the active task with optional summary (CMH-009)
+    - get_task_status -- get details of the current active task (CMH-009)
 
     Future tickets will add:
-    - start_task, complete_task, get_task_status (CMH-009)
     - generate_summary (CMH-010)
     """
 
@@ -595,4 +597,284 @@ def _register_tools(server: FastMCP) -> None:
             "action_history_count": len(record.action_history),
             "timestamp": record.timestamp.isoformat(),
             "total_branches": len(current.branches),
+        }
+
+    @server.tool()
+    def start_task(
+        ticket_id: str,
+        title: str,
+        description: str = "",
+        phase: str = "",
+    ) -> dict:
+        """Start a new task and make it the active task in memory.
+
+        Creates a new TaskMemory via the WindowManager, which handles
+        persistence and window lifecycle management.  Only one task can be
+        active at a time -- if a task is already active, returns an error
+        instructing the caller to complete or fail the current task first.
+
+        Args:
+            ticket_id: The ticket identifier (e.g., "CMH-009").  Required,
+                1-50 characters.
+            title: Human-readable title of the task (e.g., "Task lifecycle
+                management").  Required, 1-200 characters.
+            description: Optional description of the task scope and goals.
+                Up to 2000 characters.
+            phase: Optional roadmap phase (e.g., "phase-2").  Up to 50
+                characters.
+
+        Returns:
+            A dictionary with the new task details including ticket_id,
+            title, phase, started_at timestamp, task status, and window
+            state summary.  Returns an error if a task is already active.
+        """
+        wm = get_window_manager()
+
+        # Check if there is already an active task.
+        if wm.has_active_task():
+            current = wm.get_current_task()
+            logger.warning(
+                "start_task called but task %s is already active.",
+                current.ticket_id,
+            )
+            return {
+                "error": True,
+                "message": (
+                    f"Cannot start new task: task '{current.ticket_id}' "
+                    f"('{current.title}') is already active. Complete or "
+                    f"fail the current task first."
+                ),
+                "current_task_id": current.ticket_id,
+                "current_task_title": current.title,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Start the new task via WindowManager (handles persistence).
+        task = wm.start_new_task(
+            ticket_id=ticket_id,
+            title=title,
+            phase=phase if phase else None,
+        )
+
+        # Store the description in metadata if provided.
+        if description:
+            task.metadata["description"] = description
+            wm.save_current_task()
+
+        logger.info(
+            "Started task %s ('%s') via MCP tool. Phase: %s",
+            ticket_id,
+            title,
+            phase or "(none)",
+        )
+
+        return {
+            "error": False,
+            "task_id": task.ticket_id,
+            "title": task.title,
+            "phase": task.phase,
+            "description": description,
+            "started_at": task.started_at.isoformat(),
+            "status": task.status.value,
+            "window_state": {
+                "tasks_in_window": wm.total_tasks_in_window(),
+                "completed_tasks": wm.completed_task_count(),
+                "archived_tasks": wm.archived_task_count(),
+                "window_size": wm.window_size,
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    @server.tool()
+    def complete_task(
+        summary: str = "",
+    ) -> dict:
+        """Complete the current active task and rotate the sliding window.
+
+        Marks the current task as completed, sets the completion timestamp,
+        and triggers the WindowManager's window rotation.  If the window is
+        full, the oldest completed task is archived (rotated out).
+
+        The completed task remains on disk in the storage directory even
+        after it leaves the window.
+
+        Args:
+            summary: Optional completion summary describing what was
+                accomplished.  Up to 5000 characters.
+
+        Returns:
+            A dictionary with the completed task summary including ticket_id,
+            title, duration, step/decision/file/branch counts, archived
+            tasks (if any were rotated out), and updated window state.
+            Returns an error if no task is active.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.warning("complete_task called with no active task.")
+            return {
+                "error": True,
+                "message": "No active task to complete. Start a task first with start_task.",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Capture pre-completion state for reporting.
+        task_id = current.ticket_id
+        task_title = current.title
+        task_phase = current.phase
+        step_count = current.step_count()
+        decision_count = len(current.decisions)
+        file_count = len(current.files)
+        branch_count = len(current.branches)
+        started_at = current.started_at
+
+        # Capture archived IDs before rotation to detect newly archived.
+        archived_before = set(wm.window.archived_task_ids)
+
+        # Complete the task (WindowManager handles persistence and rotation).
+        completed_task = wm.complete_current_task(summary)
+
+        # Detect newly archived tasks from window rotation.
+        archived_after = set(wm.window.archived_task_ids)
+        newly_archived = sorted(archived_after - archived_before)
+
+        # Calculate duration.
+        duration_seconds = None
+        if completed_task.completed_at and started_at:
+            delta = completed_task.completed_at - started_at
+            duration_seconds = int(delta.total_seconds())
+
+        logger.info(
+            "Completed task %s ('%s') via MCP tool. Steps: %d, Decisions: %d, "
+            "Files: %d, Branches: %d. Duration: %ss. Archived: %s.",
+            task_id,
+            task_title,
+            step_count,
+            decision_count,
+            file_count,
+            branch_count,
+            duration_seconds,
+            newly_archived or "(none)",
+        )
+
+        return {
+            "error": False,
+            "task_id": task_id,
+            "title": task_title,
+            "phase": task_phase,
+            "summary": summary,
+            "status": completed_task.status.value,
+            "started_at": started_at.isoformat(),
+            "completed_at": completed_task.completed_at.isoformat(),
+            "duration_seconds": duration_seconds,
+            "counts": {
+                "steps": step_count,
+                "decisions": decision_count,
+                "files": file_count,
+                "branches": branch_count,
+            },
+            "newly_archived": newly_archived,
+            "window_state": {
+                "tasks_in_window": wm.total_tasks_in_window(),
+                "completed_tasks": wm.completed_task_count(),
+                "archived_tasks": wm.archived_task_count(),
+                "window_size": wm.window_size,
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    @server.tool()
+    def get_task_status() -> dict:
+        """Get the status and details of the current active task.
+
+        Returns a comprehensive snapshot of the active task including its
+        ticket ID, title, phase, current step/decision/file/branch counts,
+        start time, and a list of recent steps and key decisions.
+
+        This is useful for orientation after a /clear command or when
+        resuming work.  If no task is active, returns a message indicating
+        so along with counts of completed and archived tasks.
+
+        Returns:
+            A dictionary with the current task details, or a message
+            indicating no task is active.  When active, includes ticket_id,
+            title, phase, status, started_at, step_count, decision_count,
+            file_count, branch_count, recent_steps (last 5), recent_decisions
+            (last 3), file_paths, active_branch, and metadata.
+        """
+        wm = get_window_manager()
+        current = wm.get_current_task()
+
+        if current is None:
+            logger.info("get_task_status: no active task.")
+            return {
+                "error": False,
+                "has_active_task": False,
+                "message": "No active task. Use start_task to begin a new task.",
+                "window_state": {
+                    "tasks_in_window": wm.total_tasks_in_window(),
+                    "completed_tasks": wm.completed_task_count(),
+                    "archived_tasks": wm.archived_task_count(),
+                    "window_size": wm.window_size,
+                },
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        # Build recent steps (last 5).
+        recent_steps = []
+        for step in current.steps[-5:]:
+            recent_steps.append({
+                "step_number": step.step_number,
+                "action": step.action,
+                "tool_used": step.tool_used,
+                "timestamp": step.timestamp.isoformat(),
+            })
+
+        # Build recent decisions (last 3).
+        recent_decisions = []
+        for dec in current.decisions[-3:]:
+            recent_decisions.append({
+                "decision_number": dec.decision_number,
+                "decision": dec.decision,
+                "timestamp": dec.timestamp.isoformat(),
+            })
+
+        logger.info(
+            "get_task_status: task %s active. Steps: %d, Decisions: %d, "
+            "Files: %d, Branches: %d.",
+            current.ticket_id,
+            current.step_count(),
+            len(current.decisions),
+            len(current.files),
+            len(current.branches),
+        )
+
+        return {
+            "error": False,
+            "has_active_task": True,
+            "task_id": current.ticket_id,
+            "title": current.title,
+            "phase": current.phase,
+            "status": current.status.value,
+            "started_at": current.started_at.isoformat(),
+            "counts": {
+                "steps": current.step_count(),
+                "decisions": len(current.decisions),
+                "files": len(current.files),
+                "branches": len(current.branches),
+            },
+            "recent_steps": recent_steps,
+            "recent_decisions": recent_decisions,
+            "file_paths": current.get_file_paths(),
+            "active_branch": current.get_active_branch(),
+            "next_steps": current.next_steps,
+            "metadata": current.metadata,
+            "window_state": {
+                "tasks_in_window": wm.total_tasks_in_window(),
+                "completed_tasks": wm.completed_task_count(),
+                "archived_tasks": wm.archived_task_count(),
+                "window_size": wm.window_size,
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }

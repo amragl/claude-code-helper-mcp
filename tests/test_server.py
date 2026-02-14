@@ -2070,6 +2070,927 @@ class TestMixedRecordingTools:
 
 
 # ---------------------------------------------------------------------------
+# start_task tool tests (CMH-009)
+# ---------------------------------------------------------------------------
+
+class TestStartTaskToolRegistration:
+    """Tests that start_task is properly registered as an MCP tool."""
+
+    def test_tool_is_registered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        assert "start_task" in tools
+
+    def test_tool_callable(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        assert tool is not None
+
+
+class TestStartTaskBasic:
+    """Tests for basic start_task functionality."""
+
+    def test_starts_task_with_required_fields(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        assert result["error"] is False
+        assert result["task_id"] == "CMH-009"
+        assert result["title"] == "Task lifecycle management"
+        assert result["status"] == "active"
+
+    def test_starts_task_with_all_fields(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+            "description": "Implement start_task, complete_task, get_task_status",
+            "phase": "phase-2",
+        })))
+
+        assert result["error"] is False
+        assert result["task_id"] == "CMH-009"
+        assert result["title"] == "Task lifecycle management"
+        assert result["phase"] == "phase-2"
+        assert result["description"] == "Implement start_task, complete_task, get_task_status"
+        assert result["status"] == "active"
+
+    def test_returns_started_at_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        assert "started_at" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["started_at"])
+
+    def test_returns_window_state(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        assert "window_state" in result
+        ws = result["window_state"]
+        assert ws["tasks_in_window"] == 1
+        assert ws["completed_tasks"] == 0
+        assert ws["archived_tasks"] == 0
+        assert ws["window_size"] == 3
+
+    def test_returns_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Test task",
+        })))
+
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+    def test_empty_phase_is_none(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        assert result["phase"] is None
+
+    def test_empty_description_defaults_to_empty_string(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        assert result["description"] == ""
+
+
+class TestStartTaskAlreadyActive:
+    """Tests for start_task when a task is already active."""
+
+    def test_returns_error_when_task_active(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "First task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "TST-002",
+            "title": "Second task",
+        })))
+
+        assert result["error"] is True
+        assert "Cannot start new task" in result["message"]
+        assert "TST-001" in result["message"]
+
+    def test_error_includes_current_task_id(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "First task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "TST-002",
+            "title": "Second task",
+        })))
+
+        assert result["current_task_id"] == "TST-001"
+        assert result["current_task_title"] == "First task"
+
+    def test_error_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "First task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "TST-002",
+            "title": "Second task",
+        })))
+
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+
+class TestStartTaskPersistence:
+    """Tests for start_task persistence to disk."""
+
+    def test_task_persisted_to_disk(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+            "phase": "phase-2",
+        })))
+
+        wm = get_window_manager()
+        reloaded = wm.store.load_task("CMH-009")
+        assert reloaded is not None
+        assert reloaded.ticket_id == "CMH-009"
+        assert reloaded.title == "Task lifecycle management"
+        assert reloaded.phase == "phase-2"
+        assert reloaded.status.value == "active"
+
+    def test_description_stored_in_metadata(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+            "description": "Implement lifecycle tools",
+        })))
+
+        wm = get_window_manager()
+        reloaded = wm.store.load_task("CMH-009")
+        assert reloaded.metadata.get("description") == "Implement lifecycle tools"
+
+    def test_persistence_survives_window_reload(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        from claude_code_helper_mcp.storage.window_manager import WindowManager
+        wm2 = WindowManager(storage_path=str(Path(project_dir) / ".claude-memory"))
+        task = wm2.get_current_task()
+        assert task is not None
+        assert task.ticket_id == "CMH-009"
+
+    def test_window_state_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["start_task"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        from claude_code_helper_mcp.storage.window_manager import WindowManager
+        wm2 = WindowManager(storage_path=str(Path(project_dir) / ".claude-memory"))
+        assert wm2.has_active_task() is True
+        assert wm2.total_tasks_in_window() == 1
+
+
+class TestStartTaskAndRecordingToolsIntegration:
+    """Tests that start_task works with record_step, record_decision, etc."""
+
+    def test_recording_tools_work_after_start_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        start = tools["start_task"]
+        step = tools["record_step"]
+        dec = tools["record_decision"]
+
+        _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        s = _parse_tool_result(asyncio.run(step.run({"action": "Analyzed requirements"})))
+        d = _parse_tool_result(asyncio.run(dec.run({"decision": "Use WindowManager API"})))
+
+        assert s["error"] is False
+        assert s["task_id"] == "CMH-009"
+        assert s["step_number"] == 1
+        assert d["error"] is False
+        assert d["task_id"] == "CMH-009"
+        assert d["decision_number"] == 1
+
+    def test_file_and_branch_recording_after_start_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        start = tools["start_task"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+
+        _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+        })))
+
+        f = _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/server.py",
+            "action": "modified",
+        })))
+        b = _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/CMH-009",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        assert f["error"] is False
+        assert f["task_id"] == "CMH-009"
+        assert b["error"] is False
+        assert b["task_id"] == "CMH-009"
+
+
+# ---------------------------------------------------------------------------
+# complete_task tool tests (CMH-009)
+# ---------------------------------------------------------------------------
+
+class TestCompleteTaskToolRegistration:
+    """Tests that complete_task is properly registered as an MCP tool."""
+
+    def test_tool_is_registered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        assert "complete_task" in tools
+
+    def test_tool_callable(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        assert tool is not None
+
+
+class TestCompleteTaskNoActiveTask:
+    """Tests for complete_task when no active task exists."""
+
+    def test_returns_error_when_no_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["error"] is True
+        assert "No active task" in result["message"]
+
+    def test_error_includes_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+
+class TestCompleteTaskBasic:
+    """Tests for basic complete_task functionality."""
+
+    def test_completes_active_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task", phase="phase-1")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "summary": "Task completed successfully",
+        })))
+
+        assert result["error"] is False
+        assert result["task_id"] == "TST-001"
+        assert result["title"] == "Test task"
+        assert result["phase"] == "phase-1"
+        assert result["status"] == "completed"
+        assert result["summary"] == "Task completed successfully"
+
+    def test_completes_with_empty_summary(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["error"] is False
+        assert result["summary"] == ""
+        assert result["status"] == "completed"
+
+    def test_returns_completed_at_timestamp(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "completed_at" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["completed_at"])
+
+    def test_returns_duration_seconds(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "duration_seconds" in result
+        assert isinstance(result["duration_seconds"], int)
+        assert result["duration_seconds"] >= 0
+
+    def test_returns_counts(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "counts" in result
+        counts = result["counts"]
+        assert counts["steps"] == 0
+        assert counts["decisions"] == 0
+        assert counts["files"] == 0
+        assert counts["branches"] == 0
+
+    def test_returns_counts_with_recordings(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        dec_tool = tools["record_decision"]
+        file_tool = tools["record_file"]
+        complete_tool = tools["complete_task"]
+
+        _parse_tool_result(asyncio.run(step_tool.run({"action": "Step 1"})))
+        _parse_tool_result(asyncio.run(step_tool.run({"action": "Step 2"})))
+        _parse_tool_result(asyncio.run(dec_tool.run({"decision": "D1"})))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/main.py",
+            "action": "created",
+        })))
+
+        result = _parse_tool_result(asyncio.run(complete_tool.run({
+            "summary": "Done with recordings",
+        })))
+
+        assert result["counts"]["steps"] == 2
+        assert result["counts"]["decisions"] == 1
+        assert result["counts"]["files"] == 1
+
+    def test_returns_window_state(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        ws = result["window_state"]
+        assert ws["tasks_in_window"] == 1
+        assert ws["completed_tasks"] == 1
+        assert ws["archived_tasks"] == 0
+
+
+class TestCompleteTaskWindowRotation:
+    """Tests for window rotation when completing tasks."""
+
+    def test_archival_when_window_full(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+
+        for i in range(1, 4):
+            wm.start_new_task(f"TST-{i:03d}", f"Task {i}")
+            wm.complete_current_task(f"Done {i}")
+
+        wm.start_new_task("TST-004", "Task 4")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({
+            "summary": "Done 4",
+        })))
+
+        assert result["newly_archived"] == ["TST-001"]
+        assert result["window_state"]["completed_tasks"] == 3
+        assert result["window_state"]["archived_tasks"] == 1
+
+    def test_no_archival_below_window_size(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Task 1")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["newly_archived"] == []
+        assert result["window_state"]["archived_tasks"] == 0
+
+
+class TestCompleteTaskPersistence:
+    """Tests for complete_task persistence to disk."""
+
+    def test_completed_task_persisted(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        _parse_tool_result(asyncio.run(tool.run({
+            "summary": "All done",
+        })))
+
+        reloaded = wm.store.load_task("TST-001")
+        assert reloaded is not None
+        assert reloaded.status.value == "completed"
+        assert reloaded.summary == "All done"
+        assert reloaded.completed_at is not None
+
+    def test_persistence_survives_window_reload(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+        _parse_tool_result(asyncio.run(tool.run({"summary": "All done"})))
+
+        from claude_code_helper_mcp.storage.window_manager import WindowManager
+        wm2 = WindowManager(storage_path=str(Path(project_dir) / ".claude-memory"))
+        assert wm2.has_active_task() is False
+        assert wm2.completed_task_count() == 1
+
+    def test_recording_tools_reject_after_complete(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        start = tools["start_task"]
+        complete = tools["complete_task"]
+        step = tools["record_step"]
+
+        _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "TST-001",
+            "title": "Test task",
+        })))
+        _parse_tool_result(asyncio.run(complete.run({"summary": "Done"})))
+
+        s = _parse_tool_result(asyncio.run(step.run({"action": "After completion"})))
+        assert s["error"] is True
+
+
+class TestCompleteTaskSecondCallErrors:
+    """Tests that calling complete_task twice returns an error."""
+
+    def test_second_complete_returns_error(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Test task")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["complete_task"]
+
+        r1 = _parse_tool_result(asyncio.run(tool.run({"summary": "Done"})))
+        assert r1["error"] is False
+
+        r2 = _parse_tool_result(asyncio.run(tool.run({"summary": "Again"})))
+        assert r2["error"] is True
+        assert "No active task" in r2["message"]
+
+
+# ---------------------------------------------------------------------------
+# get_task_status tool tests (CMH-009)
+# ---------------------------------------------------------------------------
+
+class TestGetTaskStatusToolRegistration:
+    """Tests that get_task_status is properly registered as an MCP tool."""
+
+    def test_tool_is_registered(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        assert "get_task_status" in tools
+
+    def test_tool_callable(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        assert tool is not None
+
+
+class TestGetTaskStatusNoActiveTask:
+    """Tests for get_task_status when no active task exists."""
+
+    def test_returns_no_active_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["error"] is False
+        assert result["has_active_task"] is False
+        assert "No active task" in result["message"]
+
+    def test_returns_window_state_when_no_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "window_state" in result
+        ws = result["window_state"]
+        assert ws["tasks_in_window"] == 0
+
+    def test_returns_timestamp_when_no_task(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert "timestamp" in result
+        from datetime import datetime
+        datetime.fromisoformat(result["timestamp"])
+
+    def test_window_state_with_completed_tasks(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("TST-001", "Task 1")
+        wm.complete_current_task("Done")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["has_active_task"] is False
+        assert result["window_state"]["completed_tasks"] == 1
+        assert result["window_state"]["tasks_in_window"] == 1
+
+
+class TestGetTaskStatusWithActiveTask:
+    """Tests for get_task_status with an active task."""
+
+    def test_returns_active_task_details(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management", phase="phase-2")
+
+        tools = asyncio.run(server.get_tools())
+        tool = tools["get_task_status"]
+        result = _parse_tool_result(asyncio.run(tool.run({})))
+
+        assert result["error"] is False
+        assert result["has_active_task"] is True
+        assert result["task_id"] == "CMH-009"
+        assert result["title"] == "Task lifecycle management"
+        assert result["phase"] == "phase-2"
+        assert result["status"] == "active"
+
+    def test_returns_counts_with_recordings(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        dec_tool = tools["record_decision"]
+        file_tool = tools["record_file"]
+        branch_tool = tools["record_branch"]
+        status_tool = tools["get_task_status"]
+
+        _parse_tool_result(asyncio.run(step_tool.run({"action": "Step 1"})))
+        _parse_tool_result(asyncio.run(step_tool.run({"action": "Step 2"})))
+        _parse_tool_result(asyncio.run(dec_tool.run({"decision": "D1"})))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/server.py",
+            "action": "modified",
+        })))
+        _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/CMH-009",
+            "action": "created",
+        })))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+
+        counts = result["counts"]
+        assert counts["steps"] == 2
+        assert counts["decisions"] == 1
+        assert counts["files"] == 1
+        assert counts["branches"] == 1
+
+    def test_returns_recent_steps_capped_at_5(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management")
+
+        tools = asyncio.run(server.get_tools())
+        step_tool = tools["record_step"]
+        status_tool = tools["get_task_status"]
+
+        for i in range(1, 8):
+            _parse_tool_result(asyncio.run(step_tool.run({"action": f"Step {i}"})))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+
+        assert len(result["recent_steps"]) == 5
+        assert result["recent_steps"][0]["action"] == "Step 3"
+        assert result["recent_steps"][-1]["action"] == "Step 7"
+
+    def test_returns_recent_decisions_capped_at_3(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management")
+
+        tools = asyncio.run(server.get_tools())
+        dec_tool = tools["record_decision"]
+        status_tool = tools["get_task_status"]
+
+        for i in range(1, 6):
+            _parse_tool_result(asyncio.run(dec_tool.run({
+                "decision": f"Decision {i}",
+            })))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+
+        assert len(result["recent_decisions"]) == 3
+        assert result["recent_decisions"][0]["decision"] == "Decision 3"
+        assert result["recent_decisions"][-1]["decision"] == "Decision 5"
+
+    def test_returns_file_paths(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management")
+
+        tools = asyncio.run(server.get_tools())
+        file_tool = tools["record_file"]
+        status_tool = tools["get_task_status"]
+
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/server.py",
+            "action": "modified",
+        })))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "tests/test_server.py",
+            "action": "modified",
+        })))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+        assert result["file_paths"] == ["src/server.py", "tests/test_server.py"]
+
+    def test_returns_active_branch(self, project_dir):
+        server = create_server(project_root=project_dir)
+        wm = get_window_manager()
+        wm.start_new_task("CMH-009", "Task lifecycle management")
+
+        tools = asyncio.run(server.get_tools())
+        branch_tool = tools["record_branch"]
+        status_tool = tools["get_task_status"]
+
+        _parse_tool_result(asyncio.run(branch_tool.run({
+            "branch_name": "feature/CMH-009-lifecycle",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+        assert result["active_branch"] == "feature/CMH-009-lifecycle"
+
+    def test_returns_metadata(self, project_dir):
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+        start = tools["start_task"]
+        status_tool = tools["get_task_status"]
+
+        _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+            "description": "Implement lifecycle tools",
+        })))
+
+        result = _parse_tool_result(asyncio.run(status_tool.run({})))
+        assert result["metadata"].get("description") == "Implement lifecycle tools"
+
+
+# ---------------------------------------------------------------------------
+# Full lifecycle with task management tools (CMH-009)
+# ---------------------------------------------------------------------------
+
+class TestTaskLifecycleFullLifecycle:
+    """End-to-end test covering start_task, recordings, complete_task, get_task_status."""
+
+    def test_full_lifecycle_with_task_management(self, project_dir):
+        """Create server, start task via MCP, record, check status, complete."""
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+
+        start = tools["start_task"]
+        complete = tools["complete_task"]
+        status = tools["get_task_status"]
+        step = tools["record_step"]
+        dec = tools["record_decision"]
+        file_tool = tools["record_file"]
+        branch = tools["record_branch"]
+        health = tools["health_check"]
+
+        # 1. Check status before any task
+        r = _parse_tool_result(asyncio.run(status.run({})))
+        assert r["has_active_task"] is False
+
+        # 2. Start a task via MCP tool
+        r = _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "CMH-009",
+            "title": "Task lifecycle management",
+            "description": "Implement start_task, complete_task, get_task_status",
+            "phase": "phase-2",
+        })))
+        assert r["error"] is False
+        assert r["task_id"] == "CMH-009"
+
+        # 3. Record a branch
+        _parse_tool_result(asyncio.run(branch.run({
+            "branch_name": "feature/CMH-009-lifecycle",
+            "action": "created",
+            "base_branch": "main",
+        })))
+
+        # 4. Record steps and decisions
+        _parse_tool_result(asyncio.run(step.run({
+            "action": "Analyzed WindowManager API",
+            "tool_used": "Read",
+        })))
+        _parse_tool_result(asyncio.run(dec.run({
+            "decision": "Register tools in _register_tools function",
+            "reasoning": "Keeps all tool registrations centralized",
+        })))
+        _parse_tool_result(asyncio.run(step.run({
+            "action": "Implemented start_task tool",
+            "tool_used": "Edit",
+        })))
+        _parse_tool_result(asyncio.run(step.run({
+            "action": "Implemented complete_task tool",
+            "tool_used": "Edit",
+        })))
+        _parse_tool_result(asyncio.run(step.run({
+            "action": "Implemented get_task_status tool",
+            "tool_used": "Edit",
+        })))
+
+        # 5. Record files
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "src/claude_code_helper_mcp/mcp/server.py",
+            "action": "modified",
+            "description": "Added start_task, complete_task, get_task_status tools",
+        })))
+        _parse_tool_result(asyncio.run(file_tool.run({
+            "path": "tests/test_server.py",
+            "action": "modified",
+            "description": "Added comprehensive tests for lifecycle tools",
+        })))
+
+        # 6. Check status mid-task
+        r = _parse_tool_result(asyncio.run(status.run({})))
+        assert r["has_active_task"] is True
+        assert r["task_id"] == "CMH-009"
+        assert r["counts"]["steps"] == 4
+        assert r["counts"]["decisions"] == 1
+        assert r["counts"]["files"] == 2
+        assert r["counts"]["branches"] == 1
+        assert r["active_branch"] == "feature/CMH-009-lifecycle"
+
+        # 7. Health check still healthy
+        h = _parse_tool_result(asyncio.run(health.run({})))
+        assert h["status"] == "healthy"
+        assert h["current_task"] == "CMH-009"
+
+        # 8. Complete the task
+        r = _parse_tool_result(asyncio.run(complete.run({
+            "summary": "Implemented start_task, complete_task, get_task_status MCP tools",
+        })))
+        assert r["error"] is False
+        assert r["task_id"] == "CMH-009"
+        assert r["status"] == "completed"
+        assert r["counts"]["steps"] == 4
+
+        # 9. Status after completion
+        r = _parse_tool_result(asyncio.run(status.run({})))
+        assert r["has_active_task"] is False
+        assert r["window_state"]["completed_tasks"] == 1
+
+        # 10. Verify persistence
+        wm = get_window_manager()
+        completed = wm.store.load_task("CMH-009")
+        assert completed.status.value == "completed"
+        assert completed.step_count() == 4
+
+        # 11. Can start a new task
+        r = _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "CMH-010",
+            "title": "Markdown summary generation",
+            "phase": "phase-2",
+        })))
+        assert r["error"] is False
+        assert r["task_id"] == "CMH-010"
+        assert r["window_state"]["tasks_in_window"] == 2
+
+    def test_multiple_task_lifecycle_with_window_rotation(self, project_dir):
+        """Test starting and completing multiple tasks with window rotation."""
+        server = create_server(project_root=project_dir)
+        tools = asyncio.run(server.get_tools())
+
+        start = tools["start_task"]
+        complete = tools["complete_task"]
+        status = tools["get_task_status"]
+
+        for i in range(1, 5):
+            r = _parse_tool_result(asyncio.run(start.run({
+                "ticket_id": f"TST-{i:03d}",
+                "title": f"Task {i}",
+                "phase": "phase-1",
+            })))
+            assert r["error"] is False
+
+            r = _parse_tool_result(asyncio.run(complete.run({
+                "summary": f"Done {i}",
+            })))
+            assert r["error"] is False
+
+        r = _parse_tool_result(asyncio.run(status.run({})))
+        ws = r["window_state"]
+        assert ws["completed_tasks"] == 3
+        assert ws["archived_tasks"] == 1
+
+        r = _parse_tool_result(asyncio.run(start.run({
+            "ticket_id": "TST-005",
+            "title": "Task 5",
+        })))
+        assert r["error"] is False
+        assert r["window_state"]["tasks_in_window"] == 4
+
+
+# ---------------------------------------------------------------------------
 # Full lifecycle with all recording tools (CMH-008)
 # ---------------------------------------------------------------------------
 
