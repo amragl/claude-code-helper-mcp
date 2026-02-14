@@ -1,4 +1,4 @@
-# Project Brief: claude-memory-helper
+# Project Brief: claude-code-helper-mcp
 
 ## Overview
 
@@ -64,7 +64,7 @@ A companion MCP server and CLI agent for Agent Forge that actively records struc
 ## Existing Codebase
 
 - **Starting from scratch:** yes
-- **Existing repo:** https://github.com/amragl/claude-memory-helper
+- **Existing repo:** https://github.com/amragl/claude-code-helper-mcp
 - **Current state:** empty (just initialized with Agent Forge)
 - **Technical debt:** none
 

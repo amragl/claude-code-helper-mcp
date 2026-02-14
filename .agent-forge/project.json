@@ -1,9 +1,9 @@
 {
-  "project_name": "claude-memory-helper",
-  "repo_url": "git@github.com:amragl/claude-memory-helper.git",
+  "project_name": "claude-code-helper-mcp",
+  "repo_url": "git@github.com:amragl/claude-code-helper-mcp.git",
   "repo_owner": "amragl",
-  "repo_name": "claude-memory-helper",
-  "repo_path": "/Users/amragl/Python Projects/claude-memory-helper",
+  "repo_name": "claude-code-helper-mcp",
+  "repo_path": "/Users/amragl/Python Projects/claude-code-helper-mcp",
   "branch_strategy": {
     "main": "main",
     "develop": "main",

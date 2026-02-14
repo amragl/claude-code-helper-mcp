@@ -1,5 +1,5 @@
 {
-  "project": "claude-memory-helper",
+  "project": "claude-code-helper-mcp",
   "vision": "A companion MCP server and CLI for Agent Forge that records structured memory during task execution, enables seamless /clear recovery, and monitors for context drift with graduated intervention.",
   "updated_at": "2026-02-14T14:00:00Z",
   "phases": [
