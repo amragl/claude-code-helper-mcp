@@ -582,7 +582,7 @@ class TestGenerateSummaryTool:
                 break
         assert tool is not None, "generate_summary tool not registered"
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "auto"})
         )
         data = _parse_tool_result(result)
@@ -602,7 +602,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "auto"})
         )
         data = _parse_tool_result(result)
@@ -622,7 +622,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "TEST-001", "summary_type": "auto"})
         )
         data = _parse_tool_result(result)
@@ -642,7 +642,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "TEST-002", "summary_type": "task"})
         )
         data = _parse_tool_result(result)
@@ -662,7 +662,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "current"})
         )
         data = _parse_tool_result(result)
@@ -679,7 +679,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "index"})
         )
         data = _parse_tool_result(result)
@@ -696,7 +696,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "invalid"})
         )
         data = _parse_tool_result(result)
@@ -712,7 +712,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "DOES-NOT-EXIST", "summary_type": "task"})
         )
         data = _parse_tool_result(result)
@@ -728,7 +728,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "current"})
         )
         data = _parse_tool_result(result)
@@ -744,7 +744,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "", "summary_type": "index"})
         )
         data = _parse_tool_result(result)
@@ -769,7 +769,7 @@ class TestGenerateSummaryTool:
                 tool = t
                 break
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             tool.run({"ticket_id": "DONE-001", "summary_type": "task"})
         )
         data = _parse_tool_result(result)
