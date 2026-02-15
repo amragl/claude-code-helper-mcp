@@ -6,12 +6,26 @@ diverge from the active task's scope:
 - :class:`AlignmentChecker` -- single-action alignment checking (CMH-012)
 - :class:`DriftDetector` -- multi-action drift detection with temporal tracking (CMH-019)
 - :class:`ErrorLoopDetector` -- consecutive failure loop detection (CMH-020)
+- :class:`ConfusionDetector` -- confusion pattern detection against filesystem (CMH-021)
 """
 
 from claude_code_helper_mcp.detection.alignment import (
     AlignmentChecker,
     AlignmentReport,
     DEFAULT_ALIGNMENT_THRESHOLD,
+)
+from claude_code_helper_mcp.detection.confusion import (
+    CONFUSION_SEVERITY_HIGH,
+    CONFUSION_SEVERITY_LOW,
+    CONFUSION_SEVERITY_MEDIUM,
+    CONFUSION_SEVERITY_NONE,
+    ConfusionDetector,
+    ConfusionPattern,
+    ConfusionReport,
+    PATTERN_NONEXISTENT_FILE,
+    PATTERN_PHANTOM_STEP,
+    PATTERN_STATE_CONTRADICTION,
+    PATTERN_WRONG_NAME,
 )
 from claude_code_helper_mcp.detection.drift import (
     DEFAULT_THRESHOLDS,
@@ -40,6 +54,13 @@ from claude_code_helper_mcp.detection.error_loop import (
 __all__ = [
     "AlignmentChecker",
     "AlignmentReport",
+    "CONFUSION_SEVERITY_HIGH",
+    "CONFUSION_SEVERITY_LOW",
+    "CONFUSION_SEVERITY_MEDIUM",
+    "CONFUSION_SEVERITY_NONE",
+    "ConfusionDetector",
+    "ConfusionPattern",
+    "ConfusionReport",
     "DEFAULT_ALIGNMENT_THRESHOLD",
     "DEFAULT_LOOP_THRESHOLD",
     "DEFAULT_THRESHOLDS",
@@ -54,6 +75,10 @@ __all__ = [
     "LOOP_SEVERITY_CRITICAL",
     "LOOP_SEVERITY_NONE",
     "LOOP_SEVERITY_WARNING",
+    "PATTERN_NONEXISTENT_FILE",
+    "PATTERN_PHANTOM_STEP",
+    "PATTERN_STATE_CONTRADICTION",
+    "PATTERN_WRONG_NAME",
     "SEVERITY_CRITICAL",
     "SEVERITY_HIGH",
     "SEVERITY_LOW",
