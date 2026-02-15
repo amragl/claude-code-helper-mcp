@@ -7,6 +7,7 @@ diverge from the active task's scope:
 - :class:`DriftDetector` -- multi-action drift detection with temporal tracking (CMH-019)
 - :class:`ErrorLoopDetector` -- consecutive failure loop detection (CMH-020)
 - :class:`ConfusionDetector` -- confusion pattern detection against filesystem (CMH-021)
+- :class:`ScopeCreepDetector` -- scope creep detection against ticket scope (CMH-022)
 """
 
 from claude_code_helper_mcp.detection.alignment import (
@@ -50,6 +51,20 @@ from claude_code_helper_mcp.detection.error_loop import (
     LOOP_SEVERITY_WARNING,
     SIMILARITY_THRESHOLD,
 )
+from claude_code_helper_mcp.detection.scope_creep import (
+    CREEP_CONFIG_MODIFICATION,
+    CREEP_NEW_MODULE,
+    CREEP_OUT_OF_SCOPE_ACTION,
+    CREEP_OUT_OF_SCOPE_FILE,
+    CREEP_SEVERITY_HIGH,
+    CREEP_SEVERITY_LOW,
+    CREEP_SEVERITY_MEDIUM,
+    CREEP_SEVERITY_NONE,
+    ScopeCreepDetector,
+    ScopeCreepReport,
+    ScopeCreepSignal,
+    TicketScope,
+)
 
 __all__ = [
     "AlignmentChecker",
@@ -85,4 +100,16 @@ __all__ = [
     "SEVERITY_MODERATE",
     "SEVERITY_NONE",
     "SIMILARITY_THRESHOLD",
+    "CREEP_CONFIG_MODIFICATION",
+    "CREEP_NEW_MODULE",
+    "CREEP_OUT_OF_SCOPE_ACTION",
+    "CREEP_OUT_OF_SCOPE_FILE",
+    "CREEP_SEVERITY_HIGH",
+    "CREEP_SEVERITY_LOW",
+    "CREEP_SEVERITY_MEDIUM",
+    "CREEP_SEVERITY_NONE",
+    "ScopeCreepDetector",
+    "ScopeCreepReport",
+    "ScopeCreepSignal",
+    "TicketScope",
 ]
