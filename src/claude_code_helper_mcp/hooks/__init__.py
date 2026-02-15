@@ -19,6 +19,11 @@ State readers:
   build-output.json, backlog.json, plan-output.json) with caching and graceful
   error handling.
 
+Recovery workflow:
+
+- :class:`RecoveryWorkflow` -- Orchestrates post-/clear recovery: clear event
+  detection, recovery prompt generation, and pipeline resumption integration.
+
 All hooks are designed to be idempotent and failure-tolerant: if the memory
 system is unavailable, hooks log a warning and return without raising exceptions.
 """
@@ -29,6 +34,7 @@ from claude_code_helper_mcp.hooks.pipeline import (
     post_merge,
     post_tool_call,
 )
+from claude_code_helper_mcp.hooks.recovery import RecoveryWorkflow
 from claude_code_helper_mcp.hooks.state_reader import (
     BacklogPhase,
     BacklogState,
@@ -45,6 +51,7 @@ __all__ = [
     "post_build_start",
     "post_build_complete",
     "post_merge",
+    "RecoveryWorkflow",
     "BacklogPhase",
     "BacklogState",
     "BacklogTicket",
