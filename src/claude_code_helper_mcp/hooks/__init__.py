@@ -13,6 +13,12 @@ Hook functions:
 - :func:`post_build_complete` -- Records build completion (PR creation, file summary).
 - :func:`post_merge` -- Records the merge event and completes the memory task.
 
+State readers:
+
+- :class:`StateReader` -- Reads Agent Forge state files (pipeline.json,
+  build-output.json, backlog.json, plan-output.json) with caching and graceful
+  error handling.
+
 All hooks are designed to be idempotent and failure-tolerant: if the memory
 system is unavailable, hooks log a warning and return without raising exceptions.
 """
@@ -23,10 +29,28 @@ from claude_code_helper_mcp.hooks.pipeline import (
     post_merge,
     post_tool_call,
 )
+from claude_code_helper_mcp.hooks.state_reader import (
+    BacklogPhase,
+    BacklogState,
+    BacklogTicket,
+    BuildOutput,
+    PipelineState,
+    PlanOutput,
+    StateReader,
+    TicketContext,
+)
 
 __all__ = [
     "post_tool_call",
     "post_build_start",
     "post_build_complete",
     "post_merge",
+    "BacklogPhase",
+    "BacklogState",
+    "BacklogTicket",
+    "BuildOutput",
+    "PipelineState",
+    "PlanOutput",
+    "StateReader",
+    "TicketContext",
 ]
