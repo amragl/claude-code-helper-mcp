@@ -139,6 +139,96 @@ def show(ctx: click.Context, ticket_id: str, output_format: str) -> None:
         _render_show_text(show_data)
 
 
+@cli.command()
+@click.argument("ticket_id", required=False, default=None)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json", "prompt"], case_sensitive=False),
+    default="text",
+    help="Output format: text (default human-readable), json (machine-readable), "
+    "or prompt (raw prompt text suitable for session injection).",
+)
+@click.option(
+    "--steps",
+    "recent_step_count",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Number of recent steps to include in the recovery context.",
+)
+@click.option(
+    "--no-pipeline",
+    is_flag=True,
+    default=False,
+    help="Skip pipeline state enrichment (useful when .agent-forge/ is unavailable).",
+)
+@click.option(
+    "--detect",
+    is_flag=True,
+    default=False,
+    help="Only detect whether a /clear event has occurred. Outputs 'yes' or 'no'.",
+)
+@click.pass_context
+def recover(
+    ctx: click.Context,
+    ticket_id: Optional[str],
+    output_format: str,
+    recent_step_count: int,
+    no_pipeline: bool,
+    detect: bool,
+) -> None:
+    """Recover task context after a /clear event.
+
+    Loads the most recent task memory and generates a recovery prompt
+    that restores full awareness of the task being worked on.  If
+    TICKET_ID is provided, recovers that specific task; otherwise
+    auto-detects the active task or the most recently completed one.
+
+    The recovery prompt includes: ticket ID, phase, branch, files
+    modified, decisions made, recent steps, planned next steps, and
+    (when available) Agent Forge pipeline state.
+
+    Use --detect to check whether a /clear event occurred without
+    performing recovery.
+
+    Examples::
+
+        memory recover                  # Auto-detect and recover
+        memory recover CMH-017          # Recover specific ticket
+        memory recover --format prompt  # Raw prompt for session injection
+        memory recover --detect         # Check for /clear event
+        memory recover --format json    # Full JSON recovery data
+    """
+    storage_path = ctx.obj.get("storage_path")
+
+    if detect:
+        _run_detect(storage_path)
+        return
+
+    recover_data = _collect_recover(
+        storage_path,
+        ticket_id,
+        recent_step_count,
+        include_pipeline=not no_pipeline,
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(recover_data, indent=2, default=str))
+    elif output_format == "prompt":
+        if recover_data.get("status") == "recovered":
+            click.echo(recover_data["recovery_prompt"])
+        else:
+            click.secho(
+                recover_data.get("message", "No recovery context available."),
+                fg="red",
+                err=True,
+            )
+            sys.exit(1)
+    else:
+        _render_recover_text(recover_data)
+
+
 # ---------------------------------------------------------------------------
 # Status data collection
 # ---------------------------------------------------------------------------
@@ -951,6 +1041,206 @@ def _render_show_text(data: dict) -> None:
         for i, ns in enumerate(next_steps, 1):
             click.echo(f"  {i}. {ns}")
         click.echo()
+
+
+# ---------------------------------------------------------------------------
+# Recover data collection
+# ---------------------------------------------------------------------------
+
+
+def _run_detect(storage_path: Optional[str]) -> None:
+    """Run clear event detection and output the result.
+
+    Parameters
+    ----------
+    storage_path:
+        Explicit storage path, or None for auto-detection.
+    """
+    from claude_code_helper_mcp.hooks.recovery import RecoveryWorkflow
+
+    try:
+        kwargs: dict = {}
+        if storage_path:
+            kwargs["storage_path"] = storage_path
+        workflow = RecoveryWorkflow(**kwargs)
+        detected = workflow.detect_clear_event()
+    except Exception as exc:
+        click.secho(f"ERROR: {exc}", fg="red", err=True)
+        sys.exit(1)
+
+    if detected:
+        click.secho("yes", fg="yellow")
+        click.echo(
+            "A /clear event was detected. Run 'memory recover' to restore context.",
+            err=True,
+        )
+    else:
+        click.secho("no", fg="green")
+
+
+def _collect_recover(
+    storage_path: Optional[str],
+    ticket_id: Optional[str],
+    recent_step_count: int,
+    include_pipeline: bool,
+) -> dict:
+    """Collect recovery data using the RecoveryWorkflow.
+
+    Parameters
+    ----------
+    storage_path:
+        Explicit storage path, or None for auto-detection.
+    ticket_id:
+        Explicit ticket ID, or None for auto-detection.
+    recent_step_count:
+        Number of recent steps to include.
+    include_pipeline:
+        Whether to include pipeline state enrichment.
+
+    Returns
+    -------
+    dict
+        Recovery result from RecoveryWorkflow.recover().
+    """
+    from claude_code_helper_mcp.hooks.recovery import RecoveryWorkflow
+
+    try:
+        kwargs: dict = {}
+        if storage_path:
+            kwargs["storage_path"] = storage_path
+        workflow = RecoveryWorkflow(**kwargs)
+        return workflow.recover(
+            ticket_id=ticket_id,
+            recent_step_count=recent_step_count,
+            include_pipeline_context=include_pipeline,
+        )
+    except Exception as exc:
+        return {
+            "status": "error",
+            "error": f"Recovery failed: {exc}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+def _render_recover_text(data: dict) -> None:
+    """Render recovery data as formatted text.
+
+    Parameters
+    ----------
+    data:
+        Recovery result from _collect_recover().
+    """
+    if data.get("status") == "error":
+        click.secho(
+            "ERROR: " + data.get("error", "Unknown error"), fg="red", err=True
+        )
+        sys.exit(1)
+
+    if data.get("status") == "no_context":
+        click.secho(
+            "No context available for recovery.", fg="yellow", err=True
+        )
+        message = data.get("message", "")
+        if message:
+            click.echo(f"  {message}", err=True)
+        available = data.get("available_tasks", [])
+        if available:
+            click.echo(f"  Available tasks: {', '.join(available)}", err=True)
+        sys.exit(1)
+
+    # Recovered successfully.
+    click.secho(
+        "Claude Code Helper -- Recovery Context", fg="cyan", bold=True
+    )
+    click.secho("=" * 50, fg="cyan")
+    click.echo()
+
+    # Overview.
+    click.secho("Task", fg="green", bold=True)
+    click.secho("-" * 20, fg="green")
+    click.echo(f"  Ticket:  {data.get('ticket_id', '?')}")
+    click.echo(f"  Title:   {data.get('title', '?')}")
+    click.echo(f"  Source:  {data.get('source', '?')}")
+
+    git_branch = data.get("git_branch")
+    if git_branch:
+        click.echo(f"  Branch:  {git_branch}")
+    click.echo()
+
+    # Pipeline context.
+    pipeline_ctx = data.get("pipeline_context")
+    if pipeline_ctx:
+        click.secho("Pipeline State", fg="blue", bold=True)
+        click.secho("-" * 20, fg="blue")
+        click.echo(
+            f"  Status:          {pipeline_ctx.get('pipeline_status', '?')}"
+        )
+        step = pipeline_ctx.get("pipeline_step")
+        if step:
+            click.echo(f"  Current step:    {step}")
+        last = pipeline_ctx.get("last_completed_step")
+        if last:
+            click.echo(f"  Last completed:  {last}")
+        completed = pipeline_ctx.get("steps_completed", [])
+        if completed:
+            click.echo(f"  Steps done:      {', '.join(completed)}")
+        remaining = pipeline_ctx.get("steps_remaining", [])
+        if remaining:
+            click.echo(f"  Steps remaining: {', '.join(remaining)}")
+        pr = pipeline_ctx.get("pr_number")
+        if pr:
+            click.echo(f"  PR:              #{pr}")
+        blocked = pipeline_ctx.get("blocked_reason")
+        if blocked:
+            click.secho(f"  BLOCKED:         {blocked}", fg="red")
+        click.echo()
+
+    # Recovery context summary.
+    rc = data.get("recovery_context", {})
+    files = rc.get("files_modified", [])
+    if files:
+        click.secho("Files Modified", fg="magenta", bold=True)
+        click.secho("-" * 20, fg="magenta")
+        for f in files[:20]:
+            click.echo(f"  {f}")
+        if len(files) > 20:
+            click.echo(f"  ... and {len(files) - 20} more")
+        click.echo()
+
+    decisions = rc.get("key_decisions", [])
+    if decisions:
+        click.secho("Key Decisions", fg="white", bold=True)
+        click.secho("-" * 20, fg="white")
+        for d in decisions[:10]:
+            click.echo(f"  - {d.get('decision', 'N/A')}")
+        click.echo()
+
+    steps = rc.get("recent_steps", [])
+    if steps:
+        click.secho("Recent Steps", fg="blue", bold=True)
+        click.secho("-" * 20, fg="blue")
+        for s in steps[:10]:
+            num = s.get("step_number", "?")
+            action = s.get("action", "N/A")
+            success = s.get("success", True)
+            marker = "+" if success else "x"
+            click.echo(f"  [{marker}] Step {num}: {action}")
+        click.echo()
+
+    next_steps = rc.get("next_steps", [])
+    if next_steps:
+        click.secho("Planned Next Steps", fg="green", bold=True)
+        click.secho("-" * 20, fg="green")
+        for i, ns in enumerate(next_steps, 1):
+            click.echo(f"  {i}. {ns}")
+        click.echo()
+
+    # Footer.
+    click.secho(
+        "Recovery prompt generated. Use --format prompt to get the raw "
+        "prompt text.",
+        fg="cyan",
+    )
 
 
 # ---------------------------------------------------------------------------
