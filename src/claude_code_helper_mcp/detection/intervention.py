@@ -45,6 +45,7 @@ from claude_code_helper_mcp.detection.confusion import ConfusionReport
 from claude_code_helper_mcp.detection.drift import DriftReport
 from claude_code_helper_mcp.detection.error_loop import ErrorLoopReport
 from claude_code_helper_mcp.detection.scope_creep import ScopeCreepReport
+from claude_code_helper_mcp.models.usage import AlertLevel, UsageReport
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +131,7 @@ class AggregatedDetectionReport:
     error_loop_report: Optional[ErrorLoopReport] = None
     confusion_report: Optional[ConfusionReport] = None
     scope_creep_report: Optional[ScopeCreepReport] = None
+    usage_report: Optional[UsageReport] = None
     detector_summaries: list[DetectionSummary] = field(default_factory=list)
     any_issues_detected: bool = False
     total_issues: int = 0
@@ -154,6 +156,11 @@ class AggregatedDetectionReport:
             "scope_creep_report": (
                 self.scope_creep_report.to_dict()
                 if self.scope_creep_report
+                else None
+            ),
+            "usage_report": (
+                self.usage_report.model_dump(mode="json")
+                if self.usage_report
                 else None
             ),
             "detector_summaries": [
@@ -271,6 +278,7 @@ class InterventionManager:
         error_loop_report: Optional[ErrorLoopReport] = None,
         confusion_report: Optional[ConfusionReport] = None,
         scope_creep_report: Optional[ScopeCreepReport] = None,
+        usage_report: Optional[UsageReport] = None,
     ) -> tuple[AggregatedDetectionReport, InterventionResponse]:
         """Aggregate all detector reports and generate an intervention response.
 
@@ -303,6 +311,7 @@ class InterventionManager:
             error_loop_report=error_loop_report,
             confusion_report=confusion_report,
             scope_creep_report=scope_creep_report,
+            usage_report=usage_report,
             generated_at=now,
         )
 
@@ -337,6 +346,25 @@ class InterventionManager:
             if summary.issue_detected:
                 detectors_with_issues.append("scope_creep")
                 total_issues += summary.issue_count
+
+        if usage_report and usage_report.has_alerts:
+            severity = (
+                "critical"
+                if usage_report.max_alert_level == AlertLevel.CRITICAL
+                else "warning"
+            )
+            usage_summary = DetectionSummary(
+                detector_type="usage_burn",
+                report_available=True,
+                issue_detected=True,
+                severity=severity,
+                issue_count=len(usage_report.alerts),
+                last_event_time=now,
+            )
+            aggregated.detector_summaries.append(usage_summary)
+            detectors_with_issues.append("usage_burn")
+            total_issues += usage_summary.issue_count
+            self._record_detection("usage_burn", now)
 
         aggregated.any_issues_detected = len(detectors_with_issues) > 0
         aggregated.total_issues = total_issues
@@ -522,6 +550,12 @@ class InterventionManager:
             evidence_parts.append(
                 f"Scope creep ({aggregated.scope_creep_report.severity}): "
                 f"{len(aggregated.scope_creep_report.signals)} signals"
+            )
+        if aggregated.usage_report and aggregated.usage_report.has_alerts:
+            level = aggregated.usage_report.max_alert_level
+            evidence_parts.append(
+                f"Usage burn ({level.value if level else 'unknown'}): "
+                f"{len(aggregated.usage_report.alerts)} alerts"
             )
 
         response.evidence_summary = "; ".join(evidence_parts)
