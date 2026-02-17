@@ -75,14 +75,14 @@
       "name": "Enhancement",
       "description": "Memory analytics, developer review dashboard, memory export/import, and cross-project memory capabilities.",
       "milestone": "Analytics provide actionable insights across tasks. Dashboard gives developers full visibility. Export/import enables context sharing.",
-      "status": "in-progress",
+      "status": "completed",
       "tickets": [
         "CMH-024",
         "CMH-025",
         "CMH-026",
         "CMH-027"
       ],
-      "progress_pct": 50
+      "progress_pct": 100
     }
   ],
   "tickets": [
@@ -572,15 +572,15 @@
       "phase": "phase-6",
       "priority": "low",
       "type": "feature",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         "CMH-003",
         "CMH-024"
       ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 54,
+      "completed_at": "2026-02-17T21:37:00Z"
     }
   ]
 }
