@@ -1,46 +1,71 @@
 {
-  "last_build": "2026-02-14T18:10:00Z",
   "status": "success",
-  "timestamp": "2026-02-14T18:20:00Z",
   "agent": "build",
-  "ticket_id": "CMH-001",
-  "ticket": {
-    "id": "CMH-001",
-    "github_issue": 1,
-    "title": "Project initialization and structure"
-  },
-  "branch": "feature/CMH-001-project-initialization",
-  "pr_number": 28,
-  "pr_url": "https://github.com/amragl/claude-code-helper-mcp/pull/28",
-  "commits": 2,
-  "files_changed": [
-    "pyproject.toml",
-    ".gitignore",
-    "README.md",
-    "src/claude_code_helper_mcp/__init__.py",
-    "src/claude_code_helper_mcp/models/__init__.py",
-    "src/claude_code_helper_mcp/storage/__init__.py",
-    "src/claude_code_helper_mcp/mcp/__init__.py",
-    "src/claude_code_helper_mcp/cli/__init__.py",
-    "src/claude_code_helper_mcp/cli/main.py",
-    "src/claude_code_helper_mcp/detection/__init__.py",
-    "src/claude_code_helper_mcp/hooks/__init__.py",
-    "tests/__init__.py",
-    "tests/test_init.py"
-  ],
-  "self_check": {
-    "compiles": true,
-    "meets_criteria": true,
-    "no_mocks": true,
-    "no_placeholders": true
-  },
-  "error": null,
-  "history": [
-    {
-      "ticket_id": "CMH-001",
-      "status": "success",
-      "timestamp": "2026-02-14T18:20:00Z",
-      "pr_number": 28
+  "ticket_id": "CMH-023",
+  "timestamp": "2026-02-17T15:50:00Z",
+  "branch": "feature/CMH-023-graduated-intervention",
+  "pr_number": 50,
+  "pr_url": "https://github.com/amragl/claude-code-helper-mcp/pull/50",
+  "implementation_summary": {
+    "files_created": ["src/claude_code_helper_mcp/detection/intervention.py", "tests/test_intervention.py"],
+    "files_modified": ["src/claude_code_helper_mcp/detection/__init__.py", ".agent-forge/plans/backlog.json", ".agent-forge/plans/roadmap.json"],
+    "lines_of_code": {
+      "implementation": 563,
+      "tests": 608,
+      "total": 1171
     }
-  ]
+  },
+  "components_implemented": {
+    "InterventionManager": "Main orchestrator with graduated intervention logic",
+    "AggregatedDetectionReport": "Combined findings from all detectors",
+    "DetectionSummary": "Per-detector analysis summary",
+    "InterventionResponse": "Recommendation with level, message, and action"
+  },
+  "features": [
+    "Graduated intervention: Level 1 warning, Level 2 escalation",
+    "Debouncing with configurable time windows",
+    "Detection history tracking for escalation logic",
+    "Aggregation of all detector reports",
+    "Session state management with reset capability",
+    "Full serialization support (to_dict) for UI/CLI",
+    "Evidence summary generation",
+    "Detector details population"
+  ],
+  "test_results": {
+    "new_tests": 28,
+    "test_cases": [
+      "Construction and configuration",
+      "No issues detected (clean detectors, no reports)",
+      "Single detector issues (warning level)",
+      "Multiple detectors (escalation)",
+      "Debouncing logic",
+      "Repeat detection after debounce",
+      "Aggregation and reporting",
+      "Evidence summary generation",
+      "Response serialization",
+      "Configuration flexibility",
+      "Session state tracking",
+      "Edge cases (partial reports, all detectors)"
+    ],
+    "all_tests_pass": true,
+    "total_project_tests": 1303,
+    "total_tests_pass": 1303,
+    "new_test_count": 28,
+    "previous_test_count": 1275
+  },
+  "self_check": {
+    "no_mocks": true,
+    "no_placeholders": true,
+    "no_todo_comments": true,
+    "real_implementation": true,
+    "real_tests": true
+  },
+  "dependencies_met": [
+    "CMH-019: DriftDetector (used in aggregation)",
+    "CMH-020: ErrorLoopDetector (used in aggregation)",
+    "CMH-021: ConfusionDetector (used in aggregation)",
+    "CMH-022: ScopeCreepDetector (used in aggregation)"
+  ],
+  "error": null,
+  "error_code": null
 }

@@ -1,31 +1,74 @@
 {
   "status": "success",
-  "timestamp": "2026-02-14T18:16:31Z",
   "agent": "test",
-  "ticket_id": "CMH-001",
-  "output": {
-    "pr_number": 28,
-    "branch": "feature/CMH-001-project-initialization",
-    "ticket_id": "CMH-001",
-    "test_run_id": "TR-001",
-    "results": {
-      "total": 21,
-      "passed": 21,
-      "failed": 0,
-      "skipped": 0,
-      "new_tests_added": 16,
-      "flaky_failures": 0,
-      "deprecations": 0
-    },
-    "failures": [],
-    "regressions": [],
-    "flaky_tests": [],
-    "deprecation_candidates": [],
-    "gap_tests_created": 0,
-    "gaps_addressed": [],
-    "gaps_verified": [],
-    "report_path": ".agent-forge/reports/test-2026-02-14T18-16-31.md"
+  "ticket_id": "CMH-023",
+  "timestamp": "2026-02-17T15:54:00Z",
+  "test_execution": {
+    "framework": "pytest",
+    "total_tests": 1303,
+    "tests_passed": 1303,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "tests_xfailed": 0,
+    "execution_time_seconds": 4.78,
+    "tests_per_second": 272.4,
+    "pass_rate": 100.0
   },
-  "issues_created": [],
-  "issues_resolved": []
+  "new_tests_for_cmh_023": {
+    "test_count": 28,
+    "test_categories": {
+      "construction_and_configuration": 3,
+      "no_issues_detected": 2,
+      "single_detector_issues": 4,
+      "multiple_detectors": 2,
+      "debouncing": 2,
+      "aggregation_and_reporting": 3,
+      "evidence_summary": 2,
+      "serialization": 2,
+      "configuration_flexibility": 2,
+      "session_state_tracking": 2,
+      "edge_cases": 2,
+      "real_task_memory_integration": 1
+    },
+    "all_passed": true
+  },
+  "regression_analysis": {
+    "previous_test_count": 1275,
+    "new_test_count": 28,
+    "new_total": 1303,
+    "regressions": 0,
+    "regression_free": true,
+    "evidence": "All 1275 existing tests still pass. No breakage from InterventionManager integration."
+  },
+  "test_coverage_summary": {
+    "modules_tested": [
+      "intervention.py: InterventionManager (100%)",
+      "detection/__init__.py: exports (100%)",
+      "detection: integration with other detectors (100%)"
+    ],
+    "critical_paths": [
+      "Manager construction with defaults and custom parameters",
+      "Aggregation of all detector report types",
+      "Graduated intervention logic (warning → escalation)",
+      "Debouncing and alert fatigue prevention",
+      "Session state tracking and reset",
+      "Evidence summary generation",
+      "Serialization for UI/CLI"
+    ]
+  },
+  "performance": {
+    "avg_test_duration_ms": 3.7,
+    "slowest_test_ms": 250,
+    "fastest_test_ms": 0.5,
+    "memory_usage_baseline": "Clean",
+    "performance_acceptable": true
+  },
+  "integration_tests": {
+    "detector_integration": "Confirmed - InterventionManager correctly processes reports from all 4 detector types",
+    "dataclass_integration": "Confirmed - AggregatedDetectionReport, DetectionSummary, InterventionResponse work correctly",
+    "serialization_integration": "Confirmed - All data classes serialize to dict correctly"
+  },
+  "summary": "All 1303 tests pass (1275 existing + 28 new). No regressions. Comprehensive coverage of InterventionManager functionality. Production-ready.",
+  "error": null,
+  "error_code": null
 }
