@@ -8,7 +8,13 @@
       "description": "Project setup, dependencies, core data schema, file-based storage engine, sliding window manager, and configuration module.",
       "milestone": "Core infrastructure complete: data models defined, storage engine operational, sliding window enforced, configuration loading works.",
       "status": "completed",
-      "tickets": ["CMH-001", "CMH-002", "CMH-003", "CMH-004", "CMH-005"]
+      "tickets": [
+        "CMH-001",
+        "CMH-002",
+        "CMH-003",
+        "CMH-004",
+        "CMH-005"
+      ]
     },
     {
       "id": "phase-2",
@@ -16,7 +22,13 @@
       "description": "FastMCP server bootstrap and all recording tools: record_step, record_decision, record_file, record_branch, task lifecycle management, and markdown summary generation.",
       "milestone": "MCP server running with all 6 core recording tools functional and tested. Tasks can be started, recorded, and completed via MCP.",
       "status": "completed",
-      "tickets": ["CMH-006", "CMH-007", "CMH-008", "CMH-009", "CMH-010"]
+      "tickets": [
+        "CMH-006",
+        "CMH-007",
+        "CMH-008",
+        "CMH-009",
+        "CMH-010"
+      ]
     },
     {
       "id": "phase-3",
@@ -24,7 +36,12 @@
       "description": "Recovery context tool for post-/clear resumption, alignment checking tool, and developer-facing Click CLI with status, show, and list commands.",
       "milestone": "After /clear, get_recovery_context returns full task context. Developer CLI shows memory status, task details, and task history.",
       "status": "completed",
-      "tickets": ["CMH-011", "CMH-012", "CMH-013", "CMH-014"]
+      "tickets": [
+        "CMH-011",
+        "CMH-012",
+        "CMH-013",
+        "CMH-014"
+      ]
     },
     {
       "id": "phase-4",
@@ -32,7 +49,12 @@
       "description": "Hook integration for automatic recording, pipeline state file readers, post-clear recovery workflow, and end-to-end integration testing.",
       "milestone": "Memory recording works automatically during Agent Forge pipeline execution via hooks. Full recovery workflow operational. Integration tests pass.",
       "status": "completed",
-      "tickets": ["CMH-015", "CMH-016", "CMH-017", "CMH-018"]
+      "tickets": [
+        "CMH-015",
+        "CMH-016",
+        "CMH-017",
+        "CMH-018"
+      ]
     },
     {
       "id": "phase-5",
@@ -40,7 +62,13 @@
       "description": "Plan drift detection, error loop detection, confusion pattern detection, scope creep detection, and graduated intervention system.",
       "milestone": "Drift detection catches error loops (3+ failures) and wrong-file edits. Graduated intervention warns on first detection, suggests auto-clear on second.",
       "status": "in-progress",
-      "tickets": ["CMH-019", "CMH-020", "CMH-021", "CMH-022", "CMH-023"]
+      "tickets": [
+        "CMH-019",
+        "CMH-020",
+        "CMH-021",
+        "CMH-022",
+        "CMH-023"
+      ]
     },
     {
       "id": "phase-6",
@@ -48,7 +76,12 @@
       "description": "Memory analytics, developer review dashboard, memory export/import, and cross-project memory capabilities.",
       "milestone": "Analytics provide actionable insights across tasks. Dashboard gives developers full visibility. Export/import enables context sharing.",
       "status": "in-progress",
-      "tickets": ["CMH-024", "CMH-025", "CMH-026", "CMH-027"],
+      "tickets": [
+        "CMH-024",
+        "CMH-025",
+        "CMH-026",
+        "CMH-027"
+      ],
       "progress_pct": 50
     }
   ],
@@ -77,7 +110,9 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-001"],
+      "dependencies": [
+        "CMH-001"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 29,
@@ -92,7 +127,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-001", "CMH-002"],
+      "dependencies": [
+        "CMH-001",
+        "CMH-002"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 30,
@@ -107,7 +145,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-003"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-003"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 31,
@@ -122,7 +163,9 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-001"],
+      "dependencies": [
+        "CMH-001"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "small",
       "pr_number": 32,
@@ -137,7 +180,12 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-001", "CMH-002", "CMH-003", "CMH-005"],
+      "dependencies": [
+        "CMH-001",
+        "CMH-002",
+        "CMH-003",
+        "CMH-005"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 33,
@@ -152,7 +200,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-006"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-006"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 34,
@@ -167,7 +218,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-006"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-006"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 35,
@@ -182,7 +236,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-004", "CMH-006"],
+      "dependencies": [
+        "CMH-004",
+        "CMH-006"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 36,
@@ -197,7 +254,10 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-009"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-009"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "small",
       "pr_number": 37,
@@ -212,7 +272,11 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-003", "CMH-009"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-003",
+        "CMH-009"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 38,
@@ -227,7 +291,11 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-002", "CMH-003", "CMH-009"],
+      "dependencies": [
+        "CMH-002",
+        "CMH-003",
+        "CMH-009"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 39,
@@ -242,7 +310,11 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-003", "CMH-004", "CMH-005"],
+      "dependencies": [
+        "CMH-003",
+        "CMH-004",
+        "CMH-005"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "small",
       "pr_number": 40,
@@ -257,7 +329,10 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-003", "CMH-013"],
+      "dependencies": [
+        "CMH-003",
+        "CMH-013"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 41,
@@ -272,7 +347,12 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-006", "CMH-007", "CMH-008", "CMH-009"],
+      "dependencies": [
+        "CMH-006",
+        "CMH-007",
+        "CMH-008",
+        "CMH-009"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 42,
@@ -287,7 +367,10 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-005", "CMH-015"],
+      "dependencies": [
+        "CMH-005",
+        "CMH-015"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 43,
@@ -302,7 +385,10 @@
       "priority": "critical",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-011", "CMH-016"],
+      "dependencies": [
+        "CMH-011",
+        "CMH-016"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 44,
@@ -317,7 +403,12 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-011", "CMH-015", "CMH-016", "CMH-017"],
+      "dependencies": [
+        "CMH-011",
+        "CMH-015",
+        "CMH-016",
+        "CMH-017"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 45,
@@ -332,7 +423,10 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-012", "CMH-016"],
+      "dependencies": [
+        "CMH-012",
+        "CMH-016"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 46,
@@ -347,7 +441,10 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-007", "CMH-009"],
+      "dependencies": [
+        "CMH-007",
+        "CMH-009"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 47,
@@ -362,7 +459,11 @@
       "priority": "medium",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-003", "CMH-007", "CMH-008"],
+      "dependencies": [
+        "CMH-003",
+        "CMH-007",
+        "CMH-008"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 48,
@@ -377,7 +478,10 @@
       "priority": "medium",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-016", "CMH-019"],
+      "dependencies": [
+        "CMH-016",
+        "CMH-019"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 49,
@@ -392,7 +496,12 @@
       "priority": "high",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-019", "CMH-020", "CMH-021", "CMH-022"],
+      "dependencies": [
+        "CMH-019",
+        "CMH-020",
+        "CMH-021",
+        "CMH-022"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": 50,
@@ -407,7 +516,11 @@
       "priority": "medium",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-003", "CMH-004", "CMH-013"],
+      "dependencies": [
+        "CMH-003",
+        "CMH-004",
+        "CMH-013"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 51,
@@ -422,7 +535,11 @@
       "priority": "low",
       "type": "feature",
       "status": "done",
-      "dependencies": ["CMH-013", "CMH-014", "CMH-024"],
+      "dependencies": [
+        "CMH-013",
+        "CMH-014",
+        "CMH-024"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
       "pr_number": 52,
@@ -436,12 +553,16 @@
       "phase": "phase-6",
       "priority": "low",
       "type": "feature",
-      "status": "planned",
-      "dependencies": ["CMH-003", "CMH-004", "CMH-013"],
+      "status": "done",
+      "dependencies": [
+        "CMH-003",
+        "CMH-004",
+        "CMH-013"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 53,
+      "completed_at": "2026-02-17T17:30:00Z"
     },
     {
       "id": "CMH-027",
@@ -452,7 +573,10 @@
       "priority": "low",
       "type": "feature",
       "status": "planned",
-      "dependencies": ["CMH-003", "CMH-024"],
+      "dependencies": [
+        "CMH-003",
+        "CMH-024"
+      ],
       "assigned_agent": "build",
       "estimated_complexity": "large",
       "pr_number": null,
