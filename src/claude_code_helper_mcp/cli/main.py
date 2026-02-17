@@ -1782,5 +1782,178 @@ def _render_window_section(window: dict) -> None:
     click.echo()
 
 
+@cli.command()
+@click.argument("output_path", type=click.Path())
+@click.option(
+    "--all",
+    "export_all",
+    is_flag=True,
+    default=True,
+    help="Export all tasks (default). Use without flag to export only window tasks.",
+)
+@click.pass_context
+def export(ctx: click.Context, output_path: str, export_all: bool) -> None:
+    """Export memory to portable JSON format.
+
+    Exports all tasks (current, completed, and archived) to a portable JSON file
+    with format version for forward compatibility. The exported JSON includes
+    metadata about the export and a complete copy of all task data.
+
+    This is useful for:
+    - Backing up memory across sessions
+    - Sharing task context across projects
+    - Archiving completed work
+
+    Example::
+
+        memory export ./memory-backup.json
+        memory export /path/to/memory-export.json
+    """
+    from claude_code_helper_mcp.storage.export_import import ExportManager
+
+    storage_path = ctx.obj.get("storage_path")
+
+    try:
+        exporter = ExportManager(storage_path)
+        result = exporter.export_all(output_path)
+
+        if result.get("status") == "success":
+            click.secho(
+                f"Export successful: {result['exported_count']} tasks exported",
+                fg="green",
+            )
+            click.echo(f"File: {result['file_path']}")
+            click.echo(f"Format version: {result['format_version']}")
+            click.echo(f"Timestamp: {result['timestamp']}")
+        else:
+            click.secho(f"Export failed: {result.get('error')}", fg="red", err=True)
+            sys.exit(1)
+
+    except Exception as exc:
+        click.secho(f"Export error: {exc}", fg="red", err=True)
+        logger.exception("Export command failed")
+        sys.exit(1)
+
+
+@cli.command("import")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option(
+    "--mode",
+    type=click.Choice(["merge", "replace"], case_sensitive=False),
+    default="merge",
+    help="Import mode: 'merge' adds imported tasks alongside existing, "
+    "'replace' overwrites matching tasks. Default: merge.",
+)
+@click.option(
+    "--allow-version-mismatch",
+    is_flag=True,
+    default=False,
+    help="Allow importing from files with different format versions.",
+)
+@click.option(
+    "--validate",
+    "only_validate",
+    is_flag=True,
+    default=False,
+    help="Only validate the import file without importing.",
+)
+@click.option(
+    "--json-output",
+    "output_json",
+    is_flag=True,
+    default=False,
+    help="Output result as JSON instead of human-readable text.",
+)
+@click.pass_context
+def import_(ctx: click.Context, input_path: str, mode: str, allow_version_mismatch: bool, only_validate: bool, output_json: bool) -> None:
+    """Import memory from portable JSON format.
+
+    Imports tasks from a portable JSON file (exported via 'memory export')
+    with validation and compatibility checks.
+
+    Import modes:
+    - merge (default): Add imported tasks alongside existing ones
+    - replace: Overwrite any existing tasks with the same ticket ID
+
+    Use --validate to check if an import file is valid without importing.
+
+    Examples::
+
+        memory import ./memory-backup.json
+        memory import ./memory-backup.json --mode replace
+        memory import ./memory-export.json --validate
+        memory import ./export.json --json-output
+    """
+    from claude_code_helper_mcp.storage.export_import import ImportManager
+
+    storage_path = ctx.obj.get("storage_path")
+
+    try:
+        importer = ImportManager(storage_path)
+
+        if only_validate:
+            result = importer.validate_import_file(input_path)
+
+            if output_json:
+                click.echo(json.dumps(result, indent=2))
+            else:
+                if result.get("status") == "valid":
+                    click.secho("Validation passed", fg="green")
+                    click.echo(f"Format version: {result.get('format_version')}")
+                    click.echo(f"Tasks in file: {result.get('task_count')}")
+                else:
+                    click.secho("Validation failed", fg="red")
+                    errors = result.get("validation_errors", [])
+                    if errors:
+                        click.echo("Errors:")
+                        for error in errors:
+                            click.echo(f"  - {error}")
+            return
+
+        # Perform import
+        result = importer.import_from_file(
+            file_path=input_path,
+            mode=mode,
+            validate_compatibility=True,
+            allow_version_mismatch=allow_version_mismatch,
+        )
+
+        if output_json:
+            click.echo(json.dumps(result, indent=2))
+        else:
+            if result.get("status") == "success":
+                click.secho("Import successful", fg="green")
+                click.echo(f"Imported: {result['imported_count']} tasks")
+                if result.get("skipped_count", 0) > 0:
+                    click.echo(f"Skipped: {result['skipped_count']} tasks")
+                click.echo(f"Format version: {result.get('format_version')}")
+                click.echo(f"Mode: {mode}")
+            elif result.get("status") == "compatibility_error":
+                click.secho("Compatibility error", fg="red")
+                click.echo(f"Error: {result.get('error')}")
+                click.echo(
+                    "Use --allow-version-mismatch to force import from different version.",
+                    err=True,
+                )
+                sys.exit(1)
+            elif result.get("status") == "validation_error":
+                click.secho("Validation error", fg="red")
+                click.echo(f"Error: {result.get('error')}")
+                errors = result.get("validation_errors", [])
+                if errors:
+                    click.echo("Details:")
+                    for error in errors:
+                        click.echo(f"  - {error}")
+                sys.exit(1)
+            else:
+                click.secho(f"Import failed: {result.get('error')}", fg="red", err=True)
+                sys.exit(1)
+
+    except Exception as exc:
+        click.secho(f"Import error: {exc}", fg="red", err=True)
+        logger.exception("Import command failed")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     cli()
