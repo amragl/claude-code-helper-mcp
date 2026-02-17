@@ -1,4 +1,4 @@
-"""Drift, error loop, confusion, and scope creep detection engines.
+"""Drift, error loop, confusion, scope creep detection engines, and intervention system.
 
 This package provides detection engines for identifying when agent actions
 diverge from the active task's scope:
@@ -8,6 +8,7 @@ diverge from the active task's scope:
 - :class:`ErrorLoopDetector` -- consecutive failure loop detection (CMH-020)
 - :class:`ConfusionDetector` -- confusion pattern detection against filesystem (CMH-021)
 - :class:`ScopeCreepDetector` -- scope creep detection against ticket scope (CMH-022)
+- :class:`InterventionManager` -- graduated intervention system aggregating all detectors (CMH-023)
 """
 
 from claude_code_helper_mcp.detection.alignment import (
@@ -65,8 +66,18 @@ from claude_code_helper_mcp.detection.scope_creep import (
     ScopeCreepSignal,
     TicketScope,
 )
+from claude_code_helper_mcp.detection.intervention import (
+    INTERVENTION_LEVEL_ESCALATION,
+    INTERVENTION_LEVEL_NONE,
+    INTERVENTION_LEVEL_WARNING,
+    AggregatedDetectionReport,
+    DetectionSummary,
+    InterventionManager,
+    InterventionResponse,
+)
 
 __all__ = [
+    "AggregatedDetectionReport",
     "AlignmentChecker",
     "AlignmentReport",
     "CONFUSION_SEVERITY_HIGH",
@@ -79,12 +90,18 @@ __all__ = [
     "DEFAULT_ALIGNMENT_THRESHOLD",
     "DEFAULT_LOOP_THRESHOLD",
     "DEFAULT_THRESHOLDS",
+    "DetectionSummary",
     "DriftDetector",
     "DriftIndicator",
     "DriftReport",
     "ErrorLoopDetector",
     "ErrorLoopReport",
     "FailureRecord",
+    "INTERVENTION_LEVEL_ESCALATION",
+    "INTERVENTION_LEVEL_NONE",
+    "INTERVENTION_LEVEL_WARNING",
+    "InterventionManager",
+    "InterventionResponse",
     "LoopEvidence",
     "LOOP_SEVERITY_ACTIVE",
     "LOOP_SEVERITY_CRITICAL",

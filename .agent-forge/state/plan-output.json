@@ -1,84 +1,38 @@
 {
   "status": "success",
-  "timestamp": "2026-02-14T14:00:00Z",
   "agent": "plan",
-  "ticket_id": "CMH-001",
-  "session": "plan-1",
-  "summary": "Initial roadmap created from project brief. 6 phases with 27 tickets defined across Foundation, Core MCP Tools, Recovery and CLI, Agent Forge Integration, Drift Detection and Intervention, and Enhancement. Phase 1 (Foundation) is active with 5 tickets. All 27 GitHub issues created.",
-  "phases_created": 6,
-  "tickets_created": 27,
-  "next_ticket": "CMH-001",
-  "next_ticket_details": {
-    "id": "CMH-001",
-    "github_issue": 1,
-    "title": "Project initialization and structure",
-    "phase": "phase-1",
-    "priority": "critical",
+  "ticket_id": "CMH-023",
+  "timestamp": "2026-02-17T15:35:30Z",
+  "phase": "phase-5",
+  "phase_title": "Drift Detection and Intervention",
+  "phase_description": "Plan drift detection, error loop detection, confusion pattern detection, scope creep detection, and graduated intervention system.",
+  "selected_ticket": {
+    "id": "CMH-023",
+    "github_issue": 23,
+    "title": "Graduated intervention system",
+    "description": "Implement InterventionManager class with graduated responses: Level 1 warning on first detection, Level 2 auto-clear suggestion on second. Aggregates all detector reports. Debouncing and configurable thresholds.",
+    "phase": "phase-5",
+    "priority": "high",
     "type": "feature",
-    "dependencies_met": true,
-    "estimated_complexity": "small"
+    "status": "in-progress",
+    "estimated_complexity": "large",
+    "dependencies": ["CMH-019", "CMH-020", "CMH-021", "CMH-022"],
+    "dependencies_met": true
   },
-  "phase_summary": [
-    {
-      "id": "phase-1",
-      "name": "Foundation",
-      "status": "active",
-      "tickets": 5,
-      "completed": 0,
-      "percentage": 0
-    },
-    {
-      "id": "phase-2",
-      "name": "Core MCP Tools",
-      "status": "planned",
-      "tickets": 5,
-      "completed": 0,
-      "percentage": 0
-    },
-    {
-      "id": "phase-3",
-      "name": "Recovery and CLI",
-      "status": "planned",
-      "tickets": 4,
-      "completed": 0,
-      "percentage": 0
-    },
-    {
-      "id": "phase-4",
-      "name": "Agent Forge Integration",
-      "status": "planned",
-      "tickets": 4,
-      "completed": 0,
-      "percentage": 0
-    },
-    {
-      "id": "phase-5",
-      "name": "Drift Detection and Intervention",
-      "status": "planned",
-      "tickets": 5,
-      "completed": 0,
-      "percentage": 0
-    },
-    {
-      "id": "phase-6",
-      "name": "Enhancement",
-      "status": "planned",
-      "tickets": 4,
-      "completed": 0,
-      "percentage": 0
-    }
-  ],
-  "proposals_intake": {
-    "scanned": 0,
-    "newly_approved": 0,
-    "newly_rejected": 0,
-    "converted_to_tickets": 0,
-    "newly_implemented": 0,
-    "pending_approval_count": 0
+  "phase_progress": {
+    "total_tickets": 5,
+    "completed": 4,
+    "in_progress": 1,
+    "percentage": 80
   },
-  "recommendations": [
-    "Phase 1 (Foundation) is active with 5 tickets ready for the Build Agent. Start with CMH-001 (project initialization) which has no dependencies.",
-    "CMH-001 is a small-complexity ticket — good for establishing project structure and validating the development workflow.",
-    "After CMH-001 completes, CMH-002 (data models) and CMH-005 (configuration) can both proceed in parallel as they only depend on CMH-001."
-  ]
+  "overall_progress": {
+    "total_tickets": 27,
+    "completed": 22,
+    "in_progress": 1,
+    "percentage": 81
+  },
+  "next_action": "Build CMH-023 - Graduated intervention system. Create branch feature/CMH-023-graduated-intervention. Implement InterventionManager class.",
+  "backlog_updated": true,
+  "error": null,
+  "error_code": null
 }

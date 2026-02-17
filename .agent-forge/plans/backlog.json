@@ -1,13 +1,13 @@
 {
   "project": "claude-code-helper-mcp",
-  "updated_at": "2026-02-14T14:00:00Z",
+  "updated_at": "2026-02-15T19:17:00Z",
   "phases": [
     {
       "id": "phase-1",
       "name": "Foundation",
       "description": "Project setup, dependencies, core data schema, file-based storage engine, sliding window manager, and configuration module.",
       "milestone": "Core infrastructure complete: data models defined, storage engine operational, sliding window enforced, configuration loading works.",
-      "status": "active",
+      "status": "completed",
       "tickets": ["CMH-001", "CMH-002", "CMH-003", "CMH-004", "CMH-005"]
     },
     {
@@ -15,7 +15,7 @@
       "name": "Core MCP Tools",
       "description": "FastMCP server bootstrap and all recording tools: record_step, record_decision, record_file, record_branch, task lifecycle management, and markdown summary generation.",
       "milestone": "MCP server running with all 6 core recording tools functional and tested. Tasks can be started, recorded, and completed via MCP.",
-      "status": "planned",
+      "status": "completed",
       "tickets": ["CMH-006", "CMH-007", "CMH-008", "CMH-009", "CMH-010"]
     },
     {
@@ -23,7 +23,7 @@
       "name": "Recovery and CLI",
       "description": "Recovery context tool for post-/clear resumption, alignment checking tool, and developer-facing Click CLI with status, show, and list commands.",
       "milestone": "After /clear, get_recovery_context returns full task context. Developer CLI shows memory status, task details, and task history.",
-      "status": "planned",
+      "status": "completed",
       "tickets": ["CMH-011", "CMH-012", "CMH-013", "CMH-014"]
     },
     {
@@ -31,7 +31,7 @@
       "name": "Agent Forge Integration",
       "description": "Hook integration for automatic recording, pipeline state file readers, post-clear recovery workflow, and end-to-end integration testing.",
       "milestone": "Memory recording works automatically during Agent Forge pipeline execution via hooks. Full recovery workflow operational. Integration tests pass.",
-      "status": "planned",
+      "status": "completed",
       "tickets": ["CMH-015", "CMH-016", "CMH-017", "CMH-018"]
     },
     {
@@ -39,7 +39,7 @@
       "name": "Drift Detection and Intervention",
       "description": "Plan drift detection, error loop detection, confusion pattern detection, scope creep detection, and graduated intervention system.",
       "milestone": "Drift detection catches error loops (3+ failures) and wrong-file edits. Graduated intervention warns on first detection, suggests auto-clear on second.",
-      "status": "planned",
+      "status": "in-progress",
       "tickets": ["CMH-019", "CMH-020", "CMH-021", "CMH-022", "CMH-023"]
     },
     {
@@ -75,12 +75,12 @@
       "phase": "phase-1",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-001"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 29,
+      "completed_at": "2026-02-14T20:16:00Z"
     },
     {
       "id": "CMH-003",
@@ -90,12 +90,12 @@
       "phase": "phase-1",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-001", "CMH-002"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 30,
+      "completed_at": "2026-02-14T21:25:00Z"
     },
     {
       "id": "CMH-004",
@@ -105,12 +105,12 @@
       "phase": "phase-1",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-003"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 31,
+      "completed_at": "2026-02-14T22:17:00Z"
     },
     {
       "id": "CMH-005",
@@ -120,12 +120,12 @@
       "phase": "phase-1",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-001"],
       "assigned_agent": "build",
       "estimated_complexity": "small",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 32,
+      "completed_at": "2026-02-14T23:15:00Z"
     },
     {
       "id": "CMH-006",
@@ -135,12 +135,12 @@
       "phase": "phase-2",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-001", "CMH-002", "CMH-003", "CMH-005"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 33,
+      "completed_at": "2026-02-14T23:45:00Z"
     },
     {
       "id": "CMH-007",
@@ -150,12 +150,12 @@
       "phase": "phase-2",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-006"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 34,
+      "completed_at": "2026-02-14T23:58:00Z"
     },
     {
       "id": "CMH-008",
@@ -165,12 +165,12 @@
       "phase": "phase-2",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-006"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 35,
+      "completed_at": "2026-02-15T00:10:00Z"
     },
     {
       "id": "CMH-009",
@@ -180,12 +180,12 @@
       "phase": "phase-2",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-004", "CMH-006"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 36,
+      "completed_at": "2026-02-14T09:10:00Z"
     },
     {
       "id": "CMH-010",
@@ -195,12 +195,12 @@
       "phase": "phase-2",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-009"],
       "assigned_agent": "build",
       "estimated_complexity": "small",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 37,
+      "completed_at": "2026-02-14T10:10:00Z"
     },
     {
       "id": "CMH-011",
@@ -210,12 +210,12 @@
       "phase": "phase-3",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-003", "CMH-009"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 38,
+      "completed_at": "2026-02-14T11:10:00Z"
     },
     {
       "id": "CMH-012",
@@ -225,12 +225,12 @@
       "phase": "phase-3",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-002", "CMH-003", "CMH-009"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 39,
+      "completed_at": "2026-02-14T12:15:00Z"
     },
     {
       "id": "CMH-013",
@@ -240,12 +240,12 @@
       "phase": "phase-3",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-003", "CMH-004", "CMH-005"],
       "assigned_agent": "build",
       "estimated_complexity": "small",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 40,
+      "completed_at": "2026-02-15T10:16:00Z"
     },
     {
       "id": "CMH-014",
@@ -255,12 +255,12 @@
       "phase": "phase-3",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-003", "CMH-013"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 41,
+      "completed_at": "2026-02-15T11:10:00Z"
     },
     {
       "id": "CMH-015",
@@ -270,12 +270,12 @@
       "phase": "phase-4",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-006", "CMH-007", "CMH-008", "CMH-009"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 42,
+      "completed_at": "2026-02-15T14:18:00Z"
     },
     {
       "id": "CMH-016",
@@ -285,12 +285,12 @@
       "phase": "phase-4",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-005", "CMH-015"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 43,
+      "completed_at": "2026-02-15T15:18:00Z"
     },
     {
       "id": "CMH-017",
@@ -300,12 +300,12 @@
       "phase": "phase-4",
       "priority": "critical",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-011", "CMH-016"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 44,
+      "completed_at": "2026-02-15T16:36:00Z"
     },
     {
       "id": "CMH-018",
@@ -315,12 +315,12 @@
       "phase": "phase-4",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-011", "CMH-015", "CMH-016", "CMH-017"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 45,
+      "completed_at": "2026-02-15T17:38:00Z"
     },
     {
       "id": "CMH-019",
@@ -330,12 +330,12 @@
       "phase": "phase-5",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-012", "CMH-016"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 46,
+      "completed_at": "2026-02-15T18:47:00Z"
     },
     {
       "id": "CMH-020",
@@ -345,12 +345,12 @@
       "phase": "phase-5",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-007", "CMH-009"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 47,
+      "completed_at": "2026-02-15T19:17:00Z"
     },
     {
       "id": "CMH-021",
@@ -360,12 +360,12 @@
       "phase": "phase-5",
       "priority": "medium",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-003", "CMH-007", "CMH-008"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 48,
+      "completed_at": "2026-02-15T20:17:00Z"
     },
     {
       "id": "CMH-022",
@@ -375,12 +375,12 @@
       "phase": "phase-5",
       "priority": "medium",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-016", "CMH-019"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 49,
+      "completed_at": "2026-02-15T21:28:00Z"
     },
     {
       "id": "CMH-023",

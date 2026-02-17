@@ -391,6 +391,472 @@
         "total_tickets": 27,
         "completed_tickets": 1
       }
+    },
+    {
+      "timestamp": "2026-02-14T20:16:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-002",
+      "phase_id": "phase-1",
+      "details": "CMH-002 completed. PR #29 merged (squash). Build: pass, Validate: 6/6 pass, Test: 60/60 pass, Monitor: all healthy. 7 Pydantic data models implemented with 55 new tests.",
+      "metrics_snapshot": {
+        "overall_percentage": 7,
+        "open_bugs": 0,
+        "velocity": 2,
+        "total_tickets": 27,
+        "completed_tickets": 2,
+        "pr_number": 29,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-002-memory-data-schema-and-models",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T21:25:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-003",
+      "phase_id": "phase-1",
+      "details": "CMH-003 completed. PR #30 merged (squash). Build: pass, Validate: 6/6 pass, Test: 104/104 pass (44 new), Monitor: all healthy. MemoryStore class with atomic writes, full CRUD, corrupt file handling.",
+      "metrics_snapshot": {
+        "overall_percentage": 11,
+        "open_bugs": 0,
+        "velocity": 3,
+        "total_tickets": 27,
+        "completed_tickets": 3,
+        "pr_number": 30,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-003-file-based-storage-engine",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T22:17:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-004",
+      "phase_id": "phase-1",
+      "details": "CMH-004 completed. PR #31 merged (squash). Build: pass, Validate: 6/6 pass, Test: 159/159 pass (55 new), Monitor: all healthy. WindowManager class with full lifecycle management, sliding window rotation, archival persistence.",
+      "metrics_snapshot": {
+        "overall_percentage": 15,
+        "open_bugs": 0,
+        "velocity": 4,
+        "total_tickets": 27,
+        "completed_tickets": 4,
+        "pr_number": 31,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-004-sliding-window-retention-manager",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T23:15:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-005",
+      "phase_id": "phase-1",
+      "details": "CMH-005 completed. PR #32 merged (squash). Build: pass, Validate: 6/6 pass, Test: 228/228 pass (69 new), Monitor: all healthy. MemoryConfig class with project root detection, config file loading, env var overrides, logging configuration. Phase-1 Foundation COMPLETE (5/5 tickets).",
+      "metrics_snapshot": {
+        "overall_percentage": 19,
+        "open_bugs": 0,
+        "velocity": 5,
+        "total_tickets": 27,
+        "completed_tickets": 5,
+        "pr_number": 32,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-005-configuration-and-settings-module",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T23:15:00Z",
+      "event": "phase_completed",
+      "ticket_id": null,
+      "phase_id": "phase-1",
+      "details": "Phase 1: Foundation -- COMPLETE. All 5 tickets done: project init, data models, storage engine, window manager, configuration. Milestone M-1 (Core Infrastructure Complete) achieved. 228 total tests, 0 bugs, 5 PRs merged.",
+      "metrics_snapshot": {
+        "overall_percentage": 19,
+        "open_bugs": 0,
+        "velocity": 5,
+        "total_tickets": 27,
+        "completed_tickets": 5
+      }
+    },
+    {
+      "timestamp": "2026-02-14T23:45:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-006",
+      "phase_id": "phase-2",
+      "details": "CMH-006 completed. PR #33 merged (squash). Build: pass, Validate: 6/6 pass, Test: 271/271 pass (43 new), Monitor: all healthy. FastMCP server bootstrap with health_check tool, singleton lifecycle management, MemoryStore/WindowManager integration.",
+      "metrics_snapshot": {
+        "overall_percentage": 22,
+        "open_bugs": 0,
+        "velocity": 6,
+        "total_tickets": 27,
+        "completed_tickets": 6,
+        "pr_number": 33,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-006-fastmcp-server-bootstrap",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T23:58:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-007",
+      "phase_id": "phase-2",
+      "details": "CMH-007 completed. PR #34 merged (squash). Build: pass, Validate: 6/6 pass, Test: 310/310 pass (39 new), Monitor: all healthy. record_step and record_decision MCP tools with active task checking, auto-numbering, full persistence.",
+      "metrics_snapshot": {
+        "overall_percentage": 26,
+        "open_bugs": 0,
+        "velocity": 7,
+        "total_tickets": 27,
+        "completed_tickets": 7,
+        "pr_number": 34,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-007-record-step-and-decision-tools",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T00:10:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-008",
+      "phase_id": "phase-2",
+      "details": "CMH-008 completed. PR #35 merged (squash). Build: pass, Validate: 6/6 pass, Test: 359/359 pass (49 new), Monitor: all healthy. record_file and record_branch MCP tools with enum validation, deduplication, action history, and persistence.",
+      "metrics_snapshot": {
+        "overall_percentage": 30,
+        "open_bugs": 0,
+        "velocity": 8,
+        "total_tickets": 27,
+        "completed_tickets": 8,
+        "pr_number": 35,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-008-record-file-and-branch-tools",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T09:10:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-009",
+      "phase_id": "phase-2",
+      "details": "CMH-009 completed. PR #36 merged (squash). Build: pass, Validate: 6/6 pass, Test: 409/409 pass (50 new), Monitor: all healthy. start_task, complete_task, and get_task_status MCP tools with full WindowManager integration, persistence, edge case handling, and 50 comprehensive tests.",
+      "metrics_snapshot": {
+        "overall_percentage": 33,
+        "open_bugs": 0,
+        "velocity": 9,
+        "total_tickets": 27,
+        "completed_tickets": 9,
+        "pr_number": 36,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-009-task-lifecycle-management",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T10:10:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-010",
+      "phase_id": "phase-2",
+      "details": "CMH-010 completed. PR #37 merged (squash). Build: pass, Validate: 6/6 pass, Test: 466/466 pass (57 new), Monitor: all healthy. MarkdownGenerator class with 3 generation modes (task, current, index). generate_summary MCP tool with auto-detection. 57 comprehensive tests across 7 classes. Phase-2 COMPLETE.",
+      "metrics_snapshot": {
+        "overall_percentage": 37,
+        "open_bugs": 0,
+        "velocity": 10,
+        "total_tickets": 27,
+        "completed_tickets": 10,
+        "pr_number": 37,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-010-markdown-summary-generation",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T10:10:00Z",
+      "event": "phase_completed",
+      "ticket_id": null,
+      "phase_id": "phase-2",
+      "details": "Phase 2: Core MCP Tools -- COMPLETE. All 5 tickets done: FastMCP server, record_step/decision, record_file/branch, task lifecycle, markdown summary. Milestone M-2 (MCP Server with Recording Tools) achieved. 466 total tests, 0 bugs, 10 PRs merged.",
+      "metrics_snapshot": {
+        "overall_percentage": 37,
+        "open_bugs": 0,
+        "velocity": 10,
+        "total_tickets": 27,
+        "completed_tickets": 10
+      }
+    },
+    {
+      "timestamp": "2026-02-14T11:10:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-011",
+      "phase_id": "phase-3",
+      "details": "CMH-011 completed. PR #38 merged (squash). Build: pass, Validate: 6/6 pass, Test: 522/522 pass (56 new), Monitor: all healthy. get_recovery_context MCP tool with auto-detection, explicit lookup, archived task recovery, configurable step count, formatted prompt. Phase-3 progress: 1/4 (25%).",
+      "metrics_snapshot": {
+        "overall_percentage": 41,
+        "open_bugs": 0,
+        "velocity": 11,
+        "total_tickets": 27,
+        "completed_tickets": 11,
+        "pr_number": 38,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-011-get-recovery-context-mcp-tool",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-14T12:15:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-012",
+      "phase_id": "phase-3",
+      "details": "CMH-012 completed. PR #39 merged (squash). Build: pass, Validate: 6/6 pass, Test: 593/593 pass (71 new), Monitor: all healthy. check_alignment MCP tool with AlignmentChecker class, keyword extraction, file scope analysis, confidence scoring. Phase-3 progress: 2/4 (50%).",
+      "metrics_snapshot": {
+        "overall_percentage": 44,
+        "open_bugs": 0,
+        "velocity": 12,
+        "total_tickets": 27,
+        "completed_tickets": 12,
+        "pr_number": 39,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-012-check-alignment-mcp-tool",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T10:16:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-013",
+      "phase_id": "phase-3",
+      "details": "CMH-013 completed. PR #40 merged (squash). Build: pass, Validate: 6/6 pass, Test: 649/649 pass (56 new), Monitor: all healthy. Click CLI framework with memory status command. Phase-3 progress: 3/4 (75%).",
+      "metrics_snapshot": {
+        "overall_percentage": 48,
+        "open_bugs": 0,
+        "velocity": 13,
+        "total_tickets": 27,
+        "completed_tickets": 13,
+        "pr_number": 40,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-013-click-cli-memory-status",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T11:10:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-014",
+      "phase_id": "phase-3",
+      "details": "CMH-014 completed. PR #41 merged (squash). Build: pass, Validate: 6/6 pass, Test: 719 total (70 new), Monitor: all healthy. CLI memory list and memory show commands with --all, --format json, archived task lookup. Phase-3 COMPLETE (4/4).",
+      "metrics_snapshot": {
+        "overall_percentage": 52,
+        "open_bugs": 0,
+        "velocity": 14,
+        "total_tickets": 27,
+        "completed_tickets": 14,
+        "pr_number": 41,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-014-cli-memory-show-list",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T11:10:00Z",
+      "event": "phase_completed",
+      "ticket_id": null,
+      "phase_id": "phase-3",
+      "details": "Phase 3: Recovery and CLI -- COMPLETE. All 4 tickets done: get_recovery_context, check_alignment, CLI status, CLI list/show. Milestone M-3 (Recovery Context and Developer CLI) achieved. 719 total tests, 0 bugs, 14 PRs merged. Overall project: 52% complete (14/27 tickets).",
+      "metrics_snapshot": {
+        "overall_percentage": 52,
+        "open_bugs": 0,
+        "velocity": 14,
+        "total_tickets": 27,
+        "completed_tickets": 14
+      }
+    },
+    {
+      "timestamp": "2026-02-15T14:18:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-015",
+      "phase_id": "phase-4",
+      "details": "CMH-015 completed. PR #42 merged (squash). Build: pass, Validate: 6/6 pass, Test: 768 total (49 new, 0 regressions), Monitor: all healthy. 4 pipeline lifecycle hooks (post_tool_call, post_build_start, post_build_complete, post_merge) with failure tolerance, idempotency, and WindowManager persistence. Phase-4 progress: 1/4 (25%). First ticket in Agent Forge Integration phase.",
+      "metrics_snapshot": {
+        "overall_percentage": 56,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 15,
+        "pr_number": 42,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-015-agent-forge-hook-integration",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T15:18:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-016",
+      "phase_id": "phase-4",
+      "details": "CMH-016 completed. PR #43 merged (squash). Build: pass, Validate: 6/6 pass, Test: 847 total (79 new, 0 regressions), Monitor: all healthy. StateReader class with 4 state file readers (pipeline.json, build-output.json, backlog.json, plan-output.json), TTL-based caching, 6 typed dataclasses, get_current_ticket_context() aggregator, and BacklogState query methods. Phase-4 progress: 2/4 (50%).",
+      "metrics_snapshot": {
+        "overall_percentage": 59,
+        "open_bugs": 0,
+        "velocity": 16,
+        "total_tickets": 27,
+        "completed_tickets": 16,
+        "pr_number": 43,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-016-pipeline-state-file-readers",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T16:36:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-017",
+      "phase_id": "phase-4",
+      "details": "PR #44 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 52 new tests (899 total). RecoveryWorkflow + CLI recover command implemented.",
+      "metrics_snapshot": {
+        "overall_percentage": 63,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 17,
+        "pr_number": 44,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-017-post-clear-recovery-workflow",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T17:38:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-018",
+      "phase_id": "phase-4",
+      "details": "PR #45 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 62 new integration tests (961 total). Also fixed 11 pre-existing test_markdown.py asyncio failures. LAST ticket in phase-4. Milestone M-4 (Full Pipeline Integration) achieved.",
+      "metrics_snapshot": {
+        "overall_percentage": 67,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 18,
+        "pr_number": 45,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-018-end-to-end-integration-testing",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T17:38:00Z",
+      "event": "phase_completed",
+      "ticket_id": null,
+      "phase_id": "phase-4",
+      "details": "Phase 4: Agent Forge Integration -- COMPLETE. All 4 tickets done: hook integration (CMH-015), state readers (CMH-016), recovery workflow (CMH-017), integration testing (CMH-018). Milestone M-4 (Full Pipeline Integration) achieved. 961 total tests, 0 bugs, 18 PRs merged. Overall project: 67% complete (18/27 tickets). Phases 5 (Drift Detection) and 6 (Enhancement) remain.",
+      "metrics_snapshot": {
+        "overall_percentage": 67,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 18
+      }
+    },
+    {
+      "timestamp": "2026-02-15T18:47:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-019",
+      "phase_id": "phase-5",
+      "details": "PR #46 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 73 new tests (1034 total). DriftDetector class with 5 indicator types, configurable severity thresholds, session tracking, and TaskMemory integration. First ticket in Phase-5 (Drift Detection and Intervention).",
+      "metrics_snapshot": {
+        "overall_percentage": 70,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 19,
+        "pr_number": 46,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-019-plan-drift-detection-engine",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T19:17:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-020",
+      "phase_id": "phase-5",
+      "details": "PR #47 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 83 new tests (1117 total). ErrorLoopDetector class with configurable threshold, keyword-based similarity analysis, iterative debugging vs true loop discrimination, 4 severity levels, evidence gathering, progress signals, and TaskMemory integration. Second ticket in Phase-5.",
+      "metrics_snapshot": {
+        "overall_percentage": 74,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 20,
+        "pr_number": 47,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-020-error-loop-detection",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T20:17:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-021",
+      "phase_id": "phase-5",
+      "details": "PR #48 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 73 new tests (1190 total). ConfusionDetector class with 4 detection categories: non-existent file references, wrong function/class names, state contradictions, phantom step references. Levenshtein-based close-match suggestions. Precision-over-recall design. TaskMemory integration. Third ticket in Phase-5 (60% complete).",
+      "metrics_snapshot": {
+        "overall_percentage": 78,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 21,
+        "pr_number": 48,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-021-confusion-pattern-detection",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-15T21:28:00Z",
+      "event": "ticket_completed",
+      "ticket_id": "CMH-022",
+      "phase_id": "phase-5",
+      "details": "CMH-022: Scope creep detection. Implemented ScopeCreepDetector with 4 detection categories. PR #49 merged via squash. 85 new tests, 1275 total. Phase-5 at 80% (4/5).",
+      "metrics_snapshot": {
+        "overall_percentage": 81,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 22,
+        "total_tests": 1275,
+        "new_tests": 85
+      }
+    },
+    {
+      "timestamp": "2026-02-15T21:28:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-022",
+      "phase_id": "phase-5",
+      "details": "PR #49 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed.",
+      "metrics_snapshot": {
+        "pr_number": 49,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-022-scope-creep-detection",
+        "branch_deleted": true,
+        "local_synced": true
+      }
     }
   ]
 }
