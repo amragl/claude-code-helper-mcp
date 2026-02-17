@@ -75,6 +75,7 @@ from claude_code_helper_mcp.detection.intervention import (
     InterventionManager,
     InterventionResponse,
 )
+from claude_code_helper_mcp.detection.usage_burn import UsageBurnDetector
 
 __all__ = [
     "AggregatedDetectionReport",
@@ -129,4 +130,5 @@ __all__ = [
     "ScopeCreepReport",
     "ScopeCreepSignal",
     "TicketScope",
+    "UsageBurnDetector",
 ]

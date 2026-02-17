@@ -10,17 +10,31 @@ from claude_code_helper_mcp.models.records import (
 )
 from claude_code_helper_mcp.models.task import TaskMemory, TaskStatus
 from claude_code_helper_mcp.models.recovery import RecoveryContext
+from claude_code_helper_mcp.models.usage import (
+    AlertLevel,
+    AlertMetric,
+    SessionUsage,
+    UsageAlert,
+    UsageRecord,
+    UsageReport,
+)
 from claude_code_helper_mcp.models.window import MemoryWindow
 
 __all__ = [
+    "AlertLevel",
+    "AlertMetric",
     "BranchAction",
     "BranchRecord",
     "DecisionRecord",
     "FileAction",
     "FileRecord",
+    "MemoryWindow",
+    "RecoveryContext",
+    "SessionUsage",
     "StepRecord",
     "TaskMemory",
     "TaskStatus",
-    "RecoveryContext",
-    "MemoryWindow",
+    "UsageAlert",
+    "UsageRecord",
+    "UsageReport",
 ]
