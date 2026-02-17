@@ -117,6 +117,57 @@ class MemoryConfig(BaseModel):
         description="Detected or configured project root path.",
     )
 
+    # Usage burn tracking settings.
+    usage_tracking_enabled: bool = Field(
+        default=True,
+        description="Enable usage burn detection and alerting.",
+    )
+    usage_tool_call_warn: int = Field(
+        default=50,
+        ge=1,
+        description="Warning threshold for tool calls per task.",
+    )
+    usage_tool_call_critical: int = Field(
+        default=100,
+        ge=1,
+        description="Critical threshold for tool calls per task.",
+    )
+    usage_step_warn: int = Field(
+        default=30,
+        ge=1,
+        description="Warning threshold for steps per task.",
+    )
+    usage_step_critical: int = Field(
+        default=60,
+        ge=1,
+        description="Critical threshold for steps per task.",
+    )
+    usage_time_warn_minutes: float = Field(
+        default=15.0,
+        gt=0,
+        description="Warning threshold for task elapsed time (minutes).",
+    )
+    usage_time_critical_minutes: float = Field(
+        default=30.0,
+        gt=0,
+        description="Critical threshold for task elapsed time (minutes).",
+    )
+    usage_burst_critical: int = Field(
+        default=10,
+        ge=1,
+        description="Tool calls within burst window to trigger burst alert.",
+    )
+    usage_burst_window_seconds: int = Field(
+        default=60,
+        ge=1,
+        description="Sliding window size for burst detection (seconds).",
+    )
+    usage_session_total_calls_critical: int = Field(
+        default=500,
+        ge=1,
+        description="Critical threshold for cumulative session tool calls.",
+    )
+
     # ------------------------------------------------------------------
     # Validators
     # ------------------------------------------------------------------
@@ -431,6 +482,48 @@ def _load_env_overrides() -> dict:
             "1",
             "yes",
         )
+
+    # Usage tracking overrides.
+    usage_enabled = os.environ.get(f"{ENV_PREFIX}USAGE_TRACKING_ENABLED")
+    if usage_enabled is not None:
+        overrides["usage_tracking_enabled"] = usage_enabled.lower() in (
+            "true", "1", "yes",
+        )
+
+    _int_usage_keys = {
+        "USAGE_TOOL_CALL_WARN": "usage_tool_call_warn",
+        "USAGE_TOOL_CALL_CRITICAL": "usage_tool_call_critical",
+        "USAGE_STEP_WARN": "usage_step_warn",
+        "USAGE_STEP_CRITICAL": "usage_step_critical",
+        "USAGE_BURST_CRITICAL": "usage_burst_critical",
+        "USAGE_BURST_WINDOW_SECONDS": "usage_burst_window_seconds",
+        "USAGE_SESSION_TOTAL_CALLS_CRITICAL": "usage_session_total_calls_critical",
+    }
+    for env_key, field_name in _int_usage_keys.items():
+        val = os.environ.get(f"{ENV_PREFIX}{env_key}")
+        if val is not None:
+            try:
+                overrides[field_name] = int(val)
+            except ValueError:
+                logger.warning(
+                    "Invalid %s%s value: %r. Must be an integer. Ignoring.",
+                    ENV_PREFIX, env_key, val,
+                )
+
+    _float_usage_keys = {
+        "USAGE_TIME_WARN_MINUTES": "usage_time_warn_minutes",
+        "USAGE_TIME_CRITICAL_MINUTES": "usage_time_critical_minutes",
+    }
+    for env_key, field_name in _float_usage_keys.items():
+        val = os.environ.get(f"{ENV_PREFIX}{env_key}")
+        if val is not None:
+            try:
+                overrides[field_name] = float(val)
+            except ValueError:
+                logger.warning(
+                    "Invalid %s%s value: %r. Must be a number. Ignoring.",
+                    ENV_PREFIX, env_key, val,
+                )
 
     if overrides:
         logger.info(

@@ -26,16 +26,19 @@ from pathlib import Path
 from typing import Any, Optional
 
 from claude_code_helper_mcp.config import MemoryConfig
+from claude_code_helper_mcp.detection.usage_burn import UsageBurnDetector
 from claude_code_helper_mcp.models.records import BranchAction, FileAction
 from claude_code_helper_mcp.storage.window_manager import WindowManager
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Module-level WindowManager cache
+# Module-level WindowManager cache and UsageBurnDetector
 # ---------------------------------------------------------------------------
 
 _hook_window_manager: Optional[WindowManager] = None
+_hook_usage_detector: Optional[UsageBurnDetector] = None
+_hook_tool_call_counter: int = 0
 
 
 def _get_window_manager(
@@ -87,14 +90,49 @@ def _get_window_manager(
         return None
 
 
+def _get_usage_detector(
+    project_root: Optional[str] = None,
+) -> Optional[UsageBurnDetector]:
+    """Obtain the module-level UsageBurnDetector, creating it lazily."""
+    global _hook_usage_detector
+
+    if _hook_usage_detector is not None:
+        return _hook_usage_detector
+
+    try:
+        config = MemoryConfig.load(project_root=project_root)
+        if not config.usage_tracking_enabled:
+            return None
+        _hook_usage_detector = UsageBurnDetector(
+            storage_path=config.storage_path,
+            tool_call_warn=config.usage_tool_call_warn,
+            tool_call_critical=config.usage_tool_call_critical,
+            step_warn=config.usage_step_warn,
+            step_critical=config.usage_step_critical,
+            time_warn_minutes=config.usage_time_warn_minutes,
+            time_critical_minutes=config.usage_time_critical_minutes,
+            burst_critical=config.usage_burst_critical,
+            burst_window_seconds=config.usage_burst_window_seconds,
+            session_total_calls_critical=config.usage_session_total_calls_critical,
+        )
+        return _hook_usage_detector
+    except Exception:
+        logger.warning(
+            "Failed to initialize UsageBurnDetector.", exc_info=True
+        )
+        return None
+
+
 def reset_hook_state() -> None:
     """Reset the module-level hook state (primarily for testing).
 
-    Clears the cached standalone WindowManager so that the next hook call
-    creates a fresh instance.
+    Clears the cached standalone WindowManager and UsageBurnDetector so
+    that the next hook call creates fresh instances.
     """
-    global _hook_window_manager
+    global _hook_window_manager, _hook_usage_detector, _hook_tool_call_counter
     _hook_window_manager = None
+    _hook_usage_detector = None
+    _hook_tool_call_counter = 0
     logger.debug("Hook state reset.")
 
 
@@ -180,6 +218,22 @@ def post_tool_call(
         # Persist.
         wm.save_current_task()
 
+        # Usage burn tracking.
+        global _hook_tool_call_counter
+        usage_alerts = []
+        detector = _get_usage_detector(project_root)
+        if detector is not None:
+            detector.record_tool_call()
+            detector.record_step()
+            if file_path:
+                detector.record_file(file_path)
+            _hook_tool_call_counter += 1
+            # Check usage every 10 tool calls to minimise overhead.
+            if _hook_tool_call_counter % 10 == 0:
+                report = detector.check_usage()
+                if report.has_alerts:
+                    usage_alerts = [a.message for a in report.alerts]
+
         logger.debug(
             "post_tool_call: step #%d recorded for task %s (tool=%s, file=%s).",
             step.step_number,
@@ -188,7 +242,7 @@ def post_tool_call(
             file_path or "(none)",
         )
 
-        return {
+        result: dict[str, Any] = {
             "recorded": True,
             "task_id": current.ticket_id,
             "step_number": step.step_number,
@@ -198,6 +252,9 @@ def post_tool_call(
             "file_path": file_path,
             "timestamp": step.timestamp.isoformat(),
         }
+        if usage_alerts:
+            result["usage_alerts"] = usage_alerts
+        return result
 
     except Exception as exc:
         logger.warning(
@@ -319,6 +376,11 @@ def post_build_start(
 
         wm.save_current_task()
 
+        # Start usage tracking for this task.
+        detector = _get_usage_detector(project_root)
+        if detector is not None:
+            detector.start_task(ticket_id)
+
         logger.info(
             "post_build_start: recorded for task %s (branch=%s, created=%s).",
             ticket_id,
@@ -429,6 +491,7 @@ def post_build_complete(
 
         # Record files changed.
         files_recorded = 0
+        detector = _get_usage_detector(project_root)
         if files_changed:
             for fpath in files_changed:
                 current.record_file(
@@ -436,6 +499,8 @@ def post_build_complete(
                     action=FileAction.MODIFIED,
                     description=f"Modified in build for {ticket_id}",
                 )
+                if detector is not None:
+                    detector.record_file(fpath)
                 files_recorded += 1
 
         # Record branch push.
@@ -640,6 +705,24 @@ def post_merge(
         # Complete the task -- this triggers window rotation.
         completed_task = wm.complete_current_task(full_summary)
 
+        # Complete usage tracking and log final summary.
+        usage_summary = None
+        detector = _get_usage_detector(project_root)
+        if detector is not None:
+            usage_record = detector.complete_task()
+            if usage_record is not None:
+                usage_summary = {
+                    "tool_calls": usage_record.tool_call_count,
+                    "steps": usage_record.step_count,
+                    "files": len(usage_record.files_touched),
+                    "elapsed_minutes": round(usage_record.elapsed_minutes(), 1),
+                    "burst_events": usage_record.burst_events,
+                    "alerts": len(usage_record.alerts),
+                }
+                logger.info(
+                    "Usage summary for %s: %s", ticket_id, usage_summary
+                )
+
         logger.info(
             "post_merge: task %s completed and memory finalized "
             "(PR=#%d, steps=%d, files=%d).",
@@ -667,6 +750,7 @@ def post_merge(
                 "completed_tasks": wm.completed_task_count(),
                 "archived_tasks": wm.archived_task_count(),
             },
+            "usage_summary": usage_summary,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
