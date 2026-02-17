@@ -1955,5 +1955,134 @@ def import_(ctx: click.Context, input_path: str, mode: str, allow_version_mismat
         sys.exit(1)
 
 
+@cli.command("cross-project")
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    default=False,
+    help="Output analysis as JSON instead of human-readable text.",
+)
+@click.option(
+    "--projects",
+    "project_ids",
+    multiple=True,
+    default=None,
+    help="Specific project IDs to scan. If not provided, scans all registered projects.",
+)
+@click.option(
+    "--hub-registry",
+    type=click.Path(exists=False),
+    default=None,
+    help="Path to the Agent Forge hub registry JSON. Auto-detected if not provided.",
+)
+@click.option(
+    "--save",
+    is_flag=True,
+    default=False,
+    help="Save the analysis to ~/.claude-memory-global/cross-project-analytics.json.",
+)
+def cross_project(
+    output_json: bool,
+    project_ids: tuple,
+    hub_registry: Optional[str],
+    save: bool,
+) -> None:
+    """Aggregate memory data across multiple Agent Forge projects.
+
+    Scans all registered projects in the Agent Forge hub registry and
+    aggregates their memory analytics. Provides cross-project insights
+    including total tasks, decision patterns, and file modification patterns
+    across all projects.
+
+    Use --projects to scan specific projects only (e.g., --projects CMH --projects snow-csa-agent).
+    Use --save to persist the analysis to global storage.
+    Use --json for machine-readable output.
+
+    Examples::
+
+        memory cross-project                    # Scan all projects
+        memory cross-project --json             # JSON output
+        memory cross-project --projects CMH     # Scan only CMH
+        memory cross-project --save             # Save to global storage
+    """
+    try:
+        from claude_code_helper_mcp.analytics.cross_project import CrossProjectMemory
+
+        cross_project_memory = CrossProjectMemory(hub_registry_path=hub_registry)
+
+        # Scan projects
+        if project_ids:
+            analytics = cross_project_memory.scan_projects(list(project_ids))
+        else:
+            analytics = cross_project_memory.scan_all_projects()
+
+        # Save if requested
+        if save:
+            output_path = cross_project_memory.save_analytics(analytics)
+            click.secho(
+                f"Analysis saved to {output_path}",
+                fg="green",
+            )
+
+        # Output results
+        if output_json:
+            click.echo(json.dumps(analytics.to_dict(), indent=2, default=str))
+        else:
+            _render_cross_project_text(analytics)
+
+    except Exception as exc:
+        click.secho(f"Cross-project analysis error: {exc}", fg="red", err=True)
+        logger.exception("Cross-project command failed")
+        sys.exit(1)
+
+
+def _render_cross_project_text(analytics) -> None:
+    """Render cross-project analytics as human-readable text."""
+    click.secho("=" * 70, fg="cyan")
+    click.secho("CROSS-PROJECT MEMORY ANALYTICS", fg="cyan", bold=True)
+    click.secho("=" * 70, fg="cyan")
+
+    click.echo(f"\nScan Time: {analytics.scanned_at.isoformat() if analytics.scanned_at else 'N/A'}")
+    click.echo(f"Projects Scanned: {analytics.total_projects_scanned}")
+    click.echo(f"Projects Accessible: {analytics.total_projects_accessible}")
+
+    click.secho("\nAggregated Statistics:", fg="green", bold=True)
+    click.echo(f"  Total Tasks: {analytics.total_tasks_across_projects}")
+    click.echo(f"  Total Steps: {analytics.total_steps_across_projects}")
+    click.echo(f"  Total Decisions: {analytics.total_decisions_across_projects}")
+
+    if analytics.global_top_files:
+        click.secho("\nGlobal Top 10 Modified Files:", fg="green", bold=True)
+        for i, (file_path, count) in enumerate(
+            list(analytics.global_top_files.items())[:10], 1
+        ):
+            click.echo(f"  {i:2d}. {file_path:50s} ({count:3d} modifications)")
+
+    if analytics.global_error_patterns:
+        click.secho("\nGlobal Top 10 Error Patterns:", fg="green", bold=True)
+        for i, (error, count) in enumerate(
+            list(analytics.global_error_patterns.items())[:10], 1
+        ):
+            truncated = (error[:60] + "...") if len(error) > 60 else error
+            click.echo(f"  {i:2d}. {truncated:63s} ({count:3d} occurrences)")
+
+    click.secho("\nPer-Project Summary:", fg="green", bold=True)
+    for pid, snapshot in analytics.project_snapshots.items():
+        status_icon = "✓" if snapshot.accessible else "✗"
+        click.secho(
+            f"  [{status_icon}] {snapshot.project_name} ({pid})",
+            fg="green" if snapshot.accessible else "red",
+        )
+        if snapshot.accessible:
+            click.echo(f"      Tasks: {snapshot.total_tasks}, "
+                      f"Steps: {snapshot.total_steps}, "
+                      f"Decisions: {snapshot.total_decisions}")
+        else:
+            click.echo(f"      Error: {snapshot.scan_error}")
+
+    click.secho("=" * 70, fg="cyan")
+
+
 if __name__ == "__main__":
     cli()
