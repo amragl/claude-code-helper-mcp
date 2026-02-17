@@ -857,6 +857,65 @@
         "branch_deleted": true,
         "local_synced": true
       }
+    },
+    {
+      "timestamp": "2026-02-17T15:56:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-023",
+      "phase_id": "phase-5",
+      "details": "PR #50 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 28 new tests (1303 total). InterventionManager with graduated response levels (warning, auto-clear suggestion). Phase-5 at 100% (5/5). Milestone M-5 (Drift Detection Complete) achieved.",
+      "metrics_snapshot": {
+        "overall_percentage": 85,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 23,
+        "pr_number": 50,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-023-graduated-intervention-system",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-17T16:15:30Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-024",
+      "phase_id": "phase-6",
+      "details": "PR #51 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 25 new tests (1328 total). MemoryAnalytics class with pattern analysis across all tasks. CLI analytics command. Phase-6 progress: 1/4 (25%). First ticket in Enhancement phase.",
+      "metrics_snapshot": {
+        "overall_percentage": 88,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 24,
+        "pr_number": 51,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-024-memory-analytics",
+        "branch_deleted": true,
+        "local_synced": true
+      }
+    },
+    {
+      "timestamp": "2026-02-17T16:21:00Z",
+      "event": "pr_auto_merged",
+      "ticket_id": "CMH-025",
+      "phase_id": "phase-6",
+      "details": "PR #52 auto-merged after successful pipeline run. Strategy: squash. All 5 steps passed. 30 new tests (1358 total). DeveloperDashboard with 5 views: task timeline, decision tree, file heat map, intervention summary, window state. CLI dashboard command with --section and --json flags. Phase-6 progress: 2/4 (50%). Developers now have full visibility into memory system.",
+      "metrics_snapshot": {
+        "overall_percentage": 89,
+        "open_bugs": 0,
+        "velocity": 15,
+        "total_tickets": 27,
+        "completed_tickets": 25,
+        "pr_number": 52,
+        "merge_strategy": "squash",
+        "branch": "feature/CMH-025-developer-dashboard",
+        "branch_deleted": true,
+        "local_synced": true,
+        "total_tests": 1358,
+        "new_tests": 30
+      }
     }
   ]
 }
