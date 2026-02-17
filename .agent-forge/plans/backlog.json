@@ -420,7 +420,7 @@
       "phase": "phase-6",
       "priority": "low",
       "type": "feature",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": ["CMH-013", "CMH-014", "CMH-024"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
