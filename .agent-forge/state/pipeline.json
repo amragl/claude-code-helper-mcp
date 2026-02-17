@@ -1,39 +1,46 @@
 {
-  "status": "idle",
-  "current_phase": "phase-1",
-  "current_ticket": null,
-  "current_agent": null,
-  "current_step": null,
-  "last_completed_step": "monitor",
+  "status": "running",
+  "current_phase": "phase-5",
+  "current_ticket": "CMH-023",
+  "current_agent": "build",
+  "current_step": "build",
+  "last_completed_step": "plan",
   "failed_step": null,
   "failure_reason": null,
   "blocked_reason": null,
-  "last_run": "2026-02-14T19:30:00Z",
+  "last_run": "2026-02-17T15:35:00Z",
   "step_tracking": {
     "step_order": ["plan", "build", "validate", "test", "monitor"],
-    "current_step": null,
-    "steps_completed": ["plan", "build", "validate", "test", "monitor"],
-    "steps_remaining": [],
+    "current_step": "build",
+    "steps_completed": ["plan"],
+    "steps_remaining": ["build", "validate", "test", "monitor"],
     "step_results": {
-      "plan": { "status": "completed", "started_at": "2026-02-14T14:10:00Z", "completed_at": "2026-02-14T14:12:00Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
-      "build": { "status": "completed", "started_at": "2026-02-14T14:12:00Z", "completed_at": "2026-02-14T18:20:00Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
-      "validate": { "status": "completed", "started_at": "2026-02-14T18:20:00Z", "completed_at": "2026-02-14T19:00:00Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
-      "test": { "status": "completed", "started_at": "2026-02-14T19:00:00Z", "completed_at": "2026-02-14T19:15:00Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
-      "monitor": { "status": "completed", "started_at": "2026-02-14T19:15:00Z", "completed_at": "2026-02-14T19:30:00Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null }
+      "plan": { "status": "completed", "started_at": "2026-02-17T15:35:00Z", "completed_at": "2026-02-17T15:35:30Z", "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "build": { "status": "in-progress", "started_at": "2026-02-17T15:35:30Z", "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "validate": { "status": "pending", "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "test": { "status": "pending", "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null },
+      "monitor": { "status": "pending", "started_at": null, "completed_at": null, "error": null, "error_code": null, "retry_count": 0, "last_retry_at": null }
     }
   },
-  "auto_mode": null,
+  "auto_mode": {
+    "enabled": true,
+    "max_tickets_per_session": 10,
+    "max_hours": 8,
+    "max_consecutive_failures": 2,
+    "started_at": "2026-02-17T15:35:00Z",
+    "tickets_processed": 1,
+    "consecutive_failures": 0
+  },
   "recovery_history": [],
   "agents": {
-    "plan": { "status": "idle", "last_run": "2026-02-14T14:12:00Z", "tickets_created": 27 },
-    "build": { "status": "idle", "last_run": "2026-02-14T18:20:00Z", "prs_created": 1 },
-    "validate": { "status": "idle", "last_run": "2026-02-14T19:00:00Z", "issues_found": 0 },
-    "test": { "status": "idle", "last_run": "2026-02-14T19:15:00Z", "tests_run": 21, "failures": 0 },
-    "monitor": { "status": "idle", "last_run": "2026-02-14T19:30:00Z", "alerts": 0 },
+    "plan": { "status": "completed", "last_run": "2026-02-17T15:35:30Z", "tickets_created": 27 },
+    "build": { "status": "running", "last_run": "2026-02-17T15:35:30Z", "prs_created": 22 },
+    "validate": { "status": "idle", "last_run": null, "issues_found": 0 },
+    "test": { "status": "idle", "last_run": null, "tests_run": 1275, "failures": 0 },
+    "monitor": { "status": "idle", "last_run": null, "alerts": 0 },
     "improve": { "status": "idle", "last_run": null, "suggestions": 0 }
   },
   "history": [
-    { "timestamp": "2026-02-14T14:10:00Z", "agent": "orchestrator", "action": "pipeline_started", "details": "Single ticket mode. Ticket: CMH-001. Phase: phase-1.", "result": "success" },
-    { "timestamp": "2026-02-14T19:30:00Z", "agent": "orchestrator", "action": "ticket_completed", "details": "CMH-001: Project initialization and structure. PR #28 merged. All 5 steps passed. Tests: 21/21.", "result": "success" }
+    { "timestamp": "2026-02-17T15:35:30Z", "agent": "plan", "action": "plan_completed", "details": "Plan step completed. Selected CMH-023 (Graduated intervention system) as next ticket. Phase-5 progress: 4/5 done (80%). Backlog: 22/27 done.", "result": "success" }
   ]
 }
