@@ -1489,5 +1489,298 @@ def _format_bytes(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024 * 1024):.1f} GiB"
 
 
+@cli.command()
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    default=False,
+    help="Output dashboard as JSON instead of human-readable text.",
+)
+@click.option(
+    "--section",
+    type=click.Choice(["timeline", "decisions", "heatmap", "interventions", "window", "all"], case_sensitive=False),
+    default="all",
+    help="Display only a specific dashboard section.",
+)
+@click.pass_context
+def dashboard(ctx: click.Context, output_json: bool, section: str) -> None:
+    """Display comprehensive memory dashboard for developer review.
+
+    Shows a complete overview of memory system state including:
+    - Task timeline with chronological task status and metrics
+    - Decision tree visualization showing all decisions made
+    - File modification heat map (most-touched files)
+    - Intervention summary (detected drift, errors, confusion, scope creep)
+    - Window state (current sliding window status and occupancy)
+
+    Use --json for machine-readable output. Use --section to view a specific
+    section only (timeline, decisions, heatmap, interventions, window).
+
+    Examples::
+
+        memory dashboard
+        memory dashboard --json
+        memory dashboard --section timeline
+        memory dashboard --section heatmap --json
+    """
+    from claude_code_helper_mcp.analytics.dashboard import DeveloperDashboard
+
+    storage_path = ctx.obj.get("storage_path")
+
+    try:
+        dashboard_obj = DeveloperDashboard(storage_path)
+        dashboard_obj.generate()
+        dashboard_data = dashboard_obj.to_json_dict()
+
+        if output_json:
+            # Filter by section if requested
+            if section != "all":
+                filtered_data = {
+                    "generated_at": dashboard_data["generated_at"],
+                    section: dashboard_data.get(section, {}),
+                }
+                click.echo(json.dumps(filtered_data, indent=2))
+            else:
+                click.echo(json.dumps(dashboard_data, indent=2))
+        else:
+            _render_dashboard_text(dashboard_data, section)
+
+    except Exception as exc:
+        click.secho(
+            f"ERROR: Failed to generate dashboard: {exc}",
+            fg="red",
+            err=True,
+        )
+        logger.exception("Dashboard generation failed")
+        sys.exit(1)
+
+
+def _render_dashboard_text(dashboard_data: dict, section: str) -> None:
+    """Render dashboard data as human-readable text.
+
+    Parameters
+    ----------
+    dashboard_data:
+        Complete dashboard dictionary from DeveloperDashboard.to_json_dict().
+    section:
+        Which section to render: all, timeline, decisions, heatmap, interventions, window.
+    """
+    click.secho("\n", nl=False)
+    click.secho("=" * 80, fg="cyan", bold=True)
+    click.secho("CLAUDE CODE HELPER - MEMORY DASHBOARD", fg="cyan", bold=True)
+    click.secho(f"Generated: {dashboard_data['generated_at']}", fg="cyan")
+    click.secho("=" * 80, fg="cyan", bold=True)
+    click.echo()
+
+    summary = dashboard_data.get("summary", {})
+    click.secho("SUMMARY", fg="yellow", bold=True)
+    click.secho("-" * 40, fg="yellow")
+    click.echo(f"  Total Tasks: {summary.get('total_tasks', 0)}")
+    click.echo(f"  Total Decisions: {summary.get('total_decisions', 0)}")
+    click.echo(f"  Files Tracked: {summary.get('files_tracked', 0)}")
+    click.echo(f"  Detections: {summary.get('detections_count', 0)}")
+    click.echo()
+
+    # Timeline section
+    if section in ("all", "timeline"):
+        _render_timeline_section(dashboard_data.get("timeline", []))
+
+    # Decision tree section
+    if section in ("all", "decisions"):
+        _render_decision_section(dashboard_data.get("decision_tree", []))
+
+    # Heat map section
+    if section in ("all", "heatmap"):
+        _render_heatmap_section(dashboard_data.get("file_heat_map", []))
+
+    # Interventions section
+    if section in ("all", "interventions"):
+        _render_interventions_section(dashboard_data.get("interventions", {}))
+
+    # Window state section
+    if section in ("all", "window"):
+        _render_window_section(dashboard_data.get("window_state", {}))
+
+    click.echo()
+    click.secho("=" * 80, fg="cyan")
+
+
+def _render_timeline_section(timeline: list[dict]) -> None:
+    """Render task timeline section."""
+    click.secho("TASK TIMELINE", fg="green", bold=True)
+    click.secho("-" * 80, fg="green")
+
+    if not timeline:
+        click.echo("  No tasks in timeline.")
+        click.echo()
+        return
+
+    # Calculate column widths
+    max_ticket_len = max(len(t["ticket_id"]) for t in timeline) if timeline else 10
+    max_title_len = max(len(t["title"]) for t in timeline) if timeline else 30
+    max_ticket_len = max(max_ticket_len, 10)
+    max_title_len = min(max_title_len, 40)
+
+    # Header
+    ticket_col = "TICKET".ljust(max_ticket_len)
+    title_col = "TITLE".ljust(max_title_len)
+    click.echo(f"  {ticket_col} {title_col} STATUS      STEPS DURATION")
+    click.echo(f"  {'-' * max_ticket_len} {'-' * max_title_len} {'-' * 10} {'-' * 5} {'-' * 10}")
+
+    # Rows
+    for entry in timeline:
+        ticket = entry["ticket_id"].ljust(max_ticket_len)
+        title = entry["title"][:max_title_len].ljust(max_title_len)
+        status = entry["status"].ljust(10)
+        steps = str(entry["step_count"]).ljust(5)
+        duration_sec = entry["duration_seconds"]
+        if duration_sec < 60:
+            duration_str = f"{int(duration_sec)}s"
+        elif duration_sec < 3600:
+            duration_str = f"{int(duration_sec / 60)}m"
+        else:
+            duration_str = f"{int(duration_sec / 3600)}h"
+        duration = duration_str.ljust(10)
+
+        click.echo(f"  {ticket} {title} {status} {steps} {duration}")
+
+    click.echo()
+
+
+def _render_decision_section(decision_tree: list[dict]) -> None:
+    """Render decision tree section."""
+    click.secho("DECISION TREE", fg="blue", bold=True)
+    click.secho("-" * 80, fg="blue")
+
+    if not decision_tree:
+        click.echo("  No decisions recorded.")
+        click.echo()
+        return
+
+    click.echo(f"  Total Decisions: {len(decision_tree)}\n")
+
+    # Show first 10 decisions as samples
+    for i, decision in enumerate(decision_tree[:10], 1):
+        click.secho(f"  [{i}] {decision['task_id']}", fg="blue")
+        click.echo(f"      Decision: {decision['decision']}")
+        click.echo(f"      Reasoning: {decision['reasoning']}")
+        if decision["alternatives"]:
+            click.echo(f"      Alternatives: {', '.join(decision['alternatives'])}")
+        click.echo()
+
+    if len(decision_tree) > 10:
+        click.echo(f"  ... and {len(decision_tree) - 10} more decisions")
+        click.echo()
+
+
+def _render_heatmap_section(heat_map: list[dict]) -> None:
+    """Render file modification heat map section."""
+    click.secho("FILE MODIFICATION HEAT MAP", fg="red", bold=True)
+    click.secho("-" * 80, fg="red")
+
+    if not heat_map:
+        click.echo("  No files modified.")
+        click.echo()
+        return
+
+    # Show top 15 files
+    for entry in heat_map[:15]:
+        heat_color = "red" if entry["heat_score"] == "hot" else (
+            "yellow" if entry["heat_score"] == "warm" else (
+                "cyan" if entry["heat_score"] == "cool" else "white"
+            )
+        )
+        heat_icon = "🔥" if entry["heat_score"] == "hot" else (
+            "💥" if entry["heat_score"] == "warm" else (
+                "❄️ " if entry["heat_score"] == "cool" else "·"
+            )
+        )
+        heat_score = entry["heat_score"].upper().ljust(6)
+        count = str(entry["modification_count"]).ljust(3)
+        click.secho(f"  {heat_icon} {heat_score} ({count}x) {entry['file_path']}", fg=heat_color)
+
+    if len(heat_map) > 15:
+        click.echo(f"  ... and {len(heat_map) - 15} more files")
+
+    click.echo()
+
+
+def _render_interventions_section(interventions: dict) -> None:
+    """Render intervention summary section."""
+    click.secho("INTERVENTION SUMMARY", fg="magenta", bold=True)
+    click.secho("-" * 80, fg="magenta")
+
+    total = interventions.get("total_detections", 0)
+
+    if total == 0:
+        click.echo("  No interventions detected. System is healthy.")
+        click.echo()
+        return
+
+    click.echo(f"  Total Detections: {total}\n")
+
+    drift = interventions.get("drift_detections", [])
+    if drift:
+        click.secho(f"  Drift Detections ({len(drift)}):", fg="magenta", bold=True)
+        for d in drift[:5]:
+            click.echo(f"    • {d['ticket_id']}: {d['severity']} - {d['details']}")
+        if len(drift) > 5:
+            click.echo(f"    ... and {len(drift) - 5} more")
+        click.echo()
+
+    errors = interventions.get("error_loop_detections", [])
+    if errors:
+        click.secho(f"  Error Loop Detections ({len(errors)}):", fg="magenta", bold=True)
+        for e in errors[:5]:
+            click.echo(f"    • {e['ticket_id']}: {e['action']} ({e['consecutive_failures']} failures)")
+        if len(errors) > 5:
+            click.echo(f"    ... and {len(errors) - 5} more")
+        click.echo()
+
+    confusion = interventions.get("confusion_detections", [])
+    if confusion:
+        click.secho(f"  Confusion Detections ({len(confusion)}):", fg="magenta", bold=True)
+        for c in confusion[:5]:
+            click.echo(f"    • {c['ticket_id']}: {c['confusion_type']} - {c['details']}")
+        if len(confusion) > 5:
+            click.echo(f"    ... and {len(confusion) - 5} more")
+        click.echo()
+
+    scope = interventions.get("scope_creep_detections", [])
+    if scope:
+        click.secho(f"  Scope Creep Detections ({len(scope)}):", fg="magenta", bold=True)
+        for s in scope[:5]:
+            click.echo(f"    • {s['ticket_id']}: {s['file_path']} - {s['reason']}")
+        if len(scope) > 5:
+            click.echo(f"    ... and {len(scope) - 5} more")
+        click.echo()
+
+
+def _render_window_section(window: dict) -> None:
+    """Render window state section."""
+    click.secho("WINDOW STATE", fg="white", bold=True)
+    click.secho("-" * 80, fg="white")
+
+    if not window:
+        click.echo("  Window state unavailable.")
+        click.echo()
+        return
+
+    click.echo(f"  Window Size: {window.get('window_size', 'unknown')}")
+    click.echo(f"  Occupancy: {window.get('window_occupancy', 'unknown')}")
+    click.echo(f"  Active Task: {window.get('active_task', 'none')}")
+
+    completed = window.get("completed_tasks_in_window", [])
+    if completed:
+        click.echo(f"  Completed Tasks in Window: {len(completed)}")
+        for task_id in completed:
+            click.echo(f"    • {task_id}")
+    else:
+        click.echo("  Completed Tasks in Window: none")
+
+    click.echo()
+
+
 if __name__ == "__main__":
     cli()
