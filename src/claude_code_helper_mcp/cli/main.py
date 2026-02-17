@@ -25,6 +25,7 @@ Usage examples::
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +34,8 @@ from typing import Optional
 import click
 
 from claude_code_helper_mcp import __version__
+
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -227,6 +230,64 @@ def recover(
             sys.exit(1)
     else:
         _render_recover_text(recover_data)
+
+
+@cli.command()
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    default=False,
+    help="Output analysis as JSON instead of human-readable text.",
+)
+@click.option(
+    "--since",
+    type=click.DateTime(formats=["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"]),
+    default=None,
+    help="Only analyze tasks started on or after this date (format: YYYY-MM-DD or ISO8601).",
+)
+@click.pass_context
+def analytics(ctx: click.Context, output_json: bool, since: Optional[datetime]) -> None:
+    """Analyze patterns across all tasks in memory.
+
+    Generates insights about task execution patterns:
+    - Average steps and time per ticket
+    - Frequently modified files
+    - Common error patterns
+    - Decision patterns and reasoning trends
+
+    Use --json for machine-readable output.  Use --since to filter by
+    task start date (e.g., --since 2026-02-15).
+
+    Examples::
+
+        memory analytics
+        memory analytics --json
+        memory analytics --since 2026-02-15
+        memory analytics --json --since 2026-02-14T10:00:00
+    """
+    from claude_code_helper_mcp.analytics import MemoryAnalytics
+
+    storage_path = ctx.obj.get("storage_path")
+
+    try:
+        analyzer = MemoryAnalytics(storage_path)
+        analyzer.analyze(since=since)
+        analysis_data = analyzer.to_json_dict()
+
+        if output_json:
+            click.echo(json.dumps(analysis_data, indent=2))
+        else:
+            _render_analytics_text(analysis_data)
+
+    except Exception as exc:
+        click.secho(
+            f"Analysis failed: {exc}",
+            fg="red",
+            err=True,
+        )
+        logger.exception("Analytics error")
+        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -1243,9 +1304,111 @@ def _render_recover_text(data: dict) -> None:
     )
 
 
+def _render_analytics_text(analysis_data: dict) -> None:
+    """Render analysis results as human-readable text.
+
+    Parameters
+    ----------
+    analysis_data:
+        The JSON analysis output from MemoryAnalytics.to_json_dict().
+    """
+    summary = analysis_data.get("summary", {})
+
+    click.secho("\nMemory Analytics Report", fg="cyan", bold=True)
+    click.secho("=" * 50, fg="cyan")
+
+    # Summary section
+    click.echo()
+    click.secho("Summary", fg="green", bold=True)
+    click.secho("-" * 50, fg="green")
+
+    total_tasks = summary.get("total_tasks_analyzed", 0)
+    avg_steps = summary.get("avg_steps_per_ticket", 0)
+    avg_time = summary.get("avg_time_per_ticket_seconds", 0)
+    total_files = summary.get("total_files_modified", 0)
+    total_decisions = summary.get("total_decisions", 0)
+
+    click.echo(f"  Total tasks analyzed:        {total_tasks}")
+    click.echo(f"  Avg steps per ticket:        {avg_steps:.1f}")
+    click.echo(f"  Avg time per ticket:         {_format_seconds(avg_time)}")
+    click.echo(f"  Total files modified:        {total_files}")
+    click.echo(f"  Total decisions recorded:    {total_decisions}")
+
+    # Status breakdown
+    status_breakdown = summary.get("status_breakdown", {})
+    if status_breakdown:
+        click.echo()
+        click.secho("Task Status Breakdown", fg="green", bold=True)
+        for status, count in status_breakdown.items():
+            click.echo(f"  {status.capitalize()}: {count}")
+
+    # Top files
+    top_files = summary.get("top_files", [])
+    if top_files:
+        click.echo()
+        click.secho("Most Modified Files", fg="green", bold=True)
+        click.secho("-" * 50, fg="green")
+        for i, file_info in enumerate(top_files[:5], 1):
+            path = file_info.get("path", "?")
+            count = file_info.get("modification_count", 0)
+            click.echo(f"  {i}. {path} ({count} times)")
+
+    # Decision types
+    decision_types = analysis_data.get("decision_types", {})
+    if decision_types:
+        click.echo()
+        click.secho("Top Decision Types", fg="green", bold=True)
+        click.secho("-" * 50, fg="green")
+        for i, (dec_type, count) in enumerate(list(decision_types.items())[:5], 1):
+            click.echo(f"  {i}. {dec_type}: {count} decisions")
+
+    # Error patterns
+    error_patterns = analysis_data.get("error_patterns", {})
+    if error_patterns:
+        click.echo()
+        click.secho("Top Error Patterns", fg="yellow", bold=True)
+        click.secho("-" * 50, fg="yellow")
+        for i, (error, count) in enumerate(list(error_patterns.items())[:5], 1):
+            error_short = error[:60] + ("..." if len(error) > 60 else "")
+            click.echo(f"  {i}. {error_short} ({count} times)")
+
+    click.echo()
+    analyzed_at = analysis_data.get("analyzed_at", "?")
+    click.secho(f"Analyzed at: {analyzed_at}", fg="cyan")
+
+
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
+
+def _format_seconds(seconds: float) -> str:
+    """Format seconds into a human-readable duration string.
+
+    Parameters
+    ----------
+    seconds:
+        The duration in seconds.
+
+    Returns
+    -------
+    str
+        Human-readable duration (e.g., "1h 30m 45s", "45s").
+    """
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{minutes}m {secs}s"
+    else:
+        hours = int(seconds // 3600)
+        remaining = seconds % 3600
+        minutes = int(remaining // 60)
+        secs = int(remaining % 60)
+        if secs == 0:
+            return f"{hours}h {minutes}m"
+        return f"{hours}h {minutes}m {secs}s"
 
 
 def _format_duration(minutes: int) -> str:

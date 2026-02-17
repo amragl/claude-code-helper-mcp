@@ -390,12 +390,12 @@
       "phase": "phase-5",
       "priority": "high",
       "type": "feature",
-      "status": "planned",
+      "status": "done",
       "dependencies": ["CMH-019", "CMH-020", "CMH-021", "CMH-022"],
       "assigned_agent": "build",
       "estimated_complexity": "large",
-      "pr_number": null,
-      "completed_at": null
+      "pr_number": 50,
+      "completed_at": "2026-02-17T15:56:00Z"
     },
     {
       "id": "CMH-024",
@@ -405,7 +405,7 @@
       "phase": "phase-6",
       "priority": "medium",
       "type": "feature",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": ["CMH-003", "CMH-004", "CMH-013"],
       "assigned_agent": "build",
       "estimated_complexity": "medium",
